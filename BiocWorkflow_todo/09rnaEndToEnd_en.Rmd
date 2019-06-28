@@ -7,7 +7,7 @@ author:
     affiliation: EMBL Heidelberg, Meyerhofstrasse 1, 69117 Heidelberg, Germany, steffi.reisenauer@tum.de
 header-includes:
   - \usepackage{float}
-abstract: In this article, we walk through an end-to-end Affymetrix microarray differential expression workflow using Bioconductor packages. This workflow is directly applicable to current "Gene" type arrays, e.g. the HuGene or MoGene arrays, but can easily be adapted to similar platforms. The data analyzed here is a typical clinical microarray data set that compares inflamed and non-inflamed colon tissue in two disease subtypes. For each disease, the differential gene expression between inflamed- and non-inflamed colon tissue was analyzed. We will start from the raw data CEL files, show how to import them into a Bioconductor ExpressionSet, perform quality control and normalization and finally differential gene expression (DE) analysis, followed by some enrichment analysis.
+摘要: 在这篇文章里，我们将阐述用 Bioconductor 包 an end-to-end Affymetrix microarray differential expression 的工作流程。这个工作流程可以直接应用在目前 “基因” 类型的微陈列，例如 HuGene 或 MoGene 微陈列，同时也容易调整并适用于类似的平台。在这里进行分析的数据是来自典型的临床微陈列数据集，用来对比两种疾病亚型中发炎和非发炎的结肠组织。针对每种疾病，发炎和非发炎的结肠组织的差异基因表达被进行了分析。我们将从原始数据 CEL 文件开始，展示如何将其导入为 Bioconductor 的 ExpressionSet，实施质量控制和归一化和最终的差异基因表达分析，其次是一些显著性分析。
 keywords: Microarray, Gene Expression
 bibliography: MAEndToEnd.bib
 output:
@@ -94,39 +94,39 @@ opts_chunk$set(echo = TRUE,
 
 
 <p>
-**R version**: `r R.version.string`
+**R 版本**: `r R.version.string`
 <br />
-**Bioconductor version**: `r BiocManager::version()`
+**Bioconductor 版本**: `r BiocManager::version()`
 <br />
-**Package version**: `r packageVersion("maEndToEnd")`
+**包版本**: `r packageVersion("maEndToEnd")`
 </p>
 
 
-# Introduction
+# 介绍
 
-In this article we introduce a complete workflow for a typical (Affymetrix)
-microarray analysis. Data import, preprocessing, differential expression and
-enrichment analysis are discussed.
+在这篇文章里我们将介绍典型的（Affymetrix）微阵列分析的完整
+工作流程。从数据导入，前期处理，差异基因表达和显著性分析都会
+被讨论。
 
-The data set used [@Palmieri_2015] is from a paper studying the differences in 
-gene expression in inflamed and non-inflamed tissue. 
-14 patients suffering from Ulcerative colitis (UC) and 15 patients with Crohn's 
-disease (CD) were tested, and from each patient inflamed and non-inflamed 
-colonic mucosa tissue was obtained via a biopsy. 
-This is a typical clinical data set consisting of 58 arrays in total.
-Our aim is to analyze differential expression (DE) between the tissues. 
-Our results show a substantial overlap with the results of the original paper.
+使用的数据 [@Palmieri_2015] 来自于一篇研究发炎和非发炎组
+织中差异基因表达的论文。
+测试了 14 个患有溃疡性结肠炎 (UC)的病人和 15 个患有克罗恩病
+（CD) 的病人，然后通过活检提取了每个病人发炎和未发炎的结肠粘
+膜组织。
+这个典型的临床数据集共由 58 个阵列构成。我们的目标是分析组织
+间的差异表达（DE）。
+我们的结果显示了与原始论文结果的大量重叠。
 
-# Workflow package installation
+# 工作流程包的安装
 
-The workflow is wrapped in a package called `maEndToEnd`. 
+工作流程被包裹在叫做 `maEndToEnd` 的包里。
 
-The `maEndToEnd` package can currently be obtained from GitHub and is 
-available via the current development version of Bioconductor (3.8) (see here: <http://bioconductor.org/packages/devel/workflows/html/maEndToEnd.html>).
+`maEndToEnd` 包目前可以从 GitHub 获得，
+目前可用的开发版本为 Bioconductor (3.8) (看这里:<http://bioconductor.org/packages/devel/workflows/html/maEndToEnd.html>).
 
-## Workflow package installation from Bioconductor
+## 从 Bioconductor 安装工作流程包
 
-You can install the package via the `r CRANpkg("BiocManager")`.
+你可以通过 `r CRANpkg("BiocManager")`安装包。
 
 ```{r installBioc, eval=FALSE}
 if (!require("BiocManager"))
@@ -134,22 +134,22 @@ if (!require("BiocManager"))
 BiocManager::install("maEndToEnd", version = "devel")
 ```
 
-Currently, the workflow is available in the development version of Bioconductor
-(3.8), which will become the release version in October 2018.
+目前，工作流程可在 Bioconductor（3.8）的开发版本中获得， 这将
+成为 2018 年 10 月的发布版本。
 
-For details on how to use this version of Bioconductor see:
+有关如何使用这个版本 Bioconductor 的详细信息见：
 
 <http://bioconductor.org/developers/how-to/useDevel/>
 
-## Workflow package installation from Github
+## 从 Github 安装工作流程包
 
 ```{r, echo=TRUE, results="hide", warning=FALSE, eval=FALSE}
 
-#In order to download the package from GitHub, we need the "install_github" 
-#function from the "remotes" package. We download the latest developer 
-#version of "remotes" from GitHub with the devtool::install_github
-#function; note that this is necessary as the current "remotes" version on
-#CRAN doesn't allow us to correctly download the "maEndToEnd" package: 
+#为了从 GitHub下载包，我们需要来自 “remotes” 的包里中 
+#“install_github”的功能。我们用 
+#devtool::install_github 从 GitHub下载了最新的开发
+#版本的 "remotes" 函数；注意：这是必要的。
+#目前在CRAN上面的 “remotes” 版本不允许我们正确的下载 "maEndToEnd"包：
 
 install.packages("devtools")
 library(devtools)
@@ -162,56 +162,56 @@ remotes::install_github("b-klaus/maEndToEnd", ref="master")
 
 ```
 
-## Workflow package import
+## 工作流程包的导入
 
-Once the workflow package has been successfully installed, we can use 
-a call to `library()` in order to load it. This will also load
-all the other packages neccessary to run the workflow.
+成功安装工作流程包后，
+我们可以使用对library() 的调用来加载它。
+它还将加载运行工作流程所需的所有其他包。
 
 ```{r maEndToEndImport}
 suppressPackageStartupMessages({library("maEndToEnd")})
 ```
 
-## List of packages required for the workflow
+## 工作流程所需要的包列表
 
-Below, you find a list of packages that are required by the workflow.
-Some Helper/Styling packages have been commented here, as they are
-not strictly neccesary to execute the workflow.
+下面，您可以找到工作流程所需的软件包列表。
+这里已经注释了一些 Helper/Styling 包，
+它们不是执行工作流所必需的。
 
 ```{r pkgList, results="hide"}
-#General Bioconductor packages
+#通常的 Bioconductor 包
     library(Biobase)
     library(oligoClasses)
      
-#Annotation and data import packages
+#注释和数据导入包
     library(ArrayExpress)
     library(pd.hugene.1.0.st.v1)
     library(hugene10sttranscriptcluster.db)
      
-#Quality control and pre-processing packages
+#质量控制和前期处理包
     library(oligo)
     library(arrayQualityMetrics)
      
-#Analysis and statistics packages
+#分析和统计包
     library(limma)
     library(topGO)
     library(ReactomePA)
     library(clusterProfiler)
      
-#Plotting and color options packages
+#绘图和颜色选项包
     library(gplots)
     library(ggplot2)
     library(geneplotter)
     library(RColorBrewer)
     library(pheatmap)
      
-#Formatting/documentation packages
+#格式化/文档包
    #library(rmarkdown)
    #library(BiocStyle)
     library(dplyr)
     library(tidyr)
 
-#Helpers:
+#助手包 (Helpers)
     library(stringr)
     library(matrixStats)
     library(genefilter)
@@ -221,14 +221,14 @@ not strictly neccesary to execute the workflow.
 ```
 
 
-# Downloading the raw data from ArrayExpress
+# 从 ArrayExpress 下载原始数据
 
-The first step of the analysis is to download the raw data CEL files. These 
-files are produced by the array scanner software and contain the measured probe intensities. The data we use have been deposited at [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/)
-and have the accession code **E-MTAB-2967**.
+分析的第一步是下载原始数据CEL文件。
+这些文件由阵列扫描仪软件生成，包含测量的探针强度。我们使用的数据已存放在 [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) 上，
+其登记号为 **E-MTAB-2967**.
 
-We will store these files in the directory **raw\_data\_dir** which defaults to 
-a temporary directory.
+我们将这些文件存储在 **raw\_data\_dir** 目录中，
+该目录默认为临时目录。
 
 ```{r generateFolderForRawData}
 raw_data_dir <- tempdir()
@@ -240,48 +240,48 @@ if (!dir.exists(raw_data_dir)) {
 ```
 
 
-Each ArrayExpress data set has a landing page summarizing the data set, 
-and we use the `getAE`function from the `r Biocpkg("ArrayExpress") ` Bioconductor package to obtain 
-the ftp links to the raw data files ([Data from Palmieri et. al. on ArrayEpress](https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2967/)).
+每个 ArrayExpress 数据集都有一个总结数据集的登陆页面， 
+我们使用`r Biocpkg("ArrayExpress") ` Bioconductor 包中的 `getAE` 函数获取原始数据文件的
+ftp 链接 ([Data from Palmieri et. al. on ArrayEpress](https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2967/)).
 
 
-With the code below, we download the raw data (also including annotation data) from
-[ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) [@Kolesnikov_2014] 
-by using the `getAE`-function. The data are saved in the `raw_data_dir`
-created above. The names of the downloaded files are returned as a list.
+使用下面的代码，我们使用`getAE`函数
+从 [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) [@Kolesnikov_2014] 下载原始数据（也包括注释数据）。
+数据保存在上面创建的  `raw_data_dir`中。
+下载文件的名称将作为列表返回。
 
 
 ```{r getDataEBI, eval=TRUE, results='hide', message=FALSE}
 anno_AE <- getAE("E-MTAB-2967", path = raw_data_dir, type = "raw")
 ```
 
-We will now have a closer look at the data we downloaded from ArrayExpress
+我们现在将仔细研究从 ArrayExpress 下载的数据。
 
-# Background information on the data
+# 有关数据的背景信息
 
-## Information stored in ArrayExpress
+## ArrayExpress 里储存的信息
 
-Each dataset at ArrayExpress is stored according to the MAGE-TAB 
-(MicroArray Gene Expression Tabular) specifications as a collection of
-tables bundled with the raw data. The MAGE-TAB format specifies up to five 
-different types of files:
+ArrayExpress 中的每个数据集都根据 
+MAGE-TAB（微阵列基因表达式表格）规范存储为与
+原始数据捆绑在一起的表的集合。  
+MAGE-TAB 格式指定最多五种不同类型的文件：
 
 
-* **Investigation Description Format (IDF)**
-* **Array Design Format (ADF)**
-* **Sample and Data Relationship Format (SDRF)**
-* **raw data files** 
-* **processed data files**
+* **调查说明格式 (IDF)**
+* **阵列设计格式 (ADF)**
+* **样本和数据关系格式 (SDRF)**
+* **原始数据文件** 
+* **处理过的数据文件**
 
-Other than the raw data files, the IDF and the SDRF file are important for us. 
-The IDF file contains top level information
-about the experiment including title, description, submitter contact details 
-and protocols. The SDRF file contains essential information on the experimental 
-samples, e.g. the experimental group(s) they belong to. 
+除原始数据文件外，
+IDF 和 SDRF 文件对我们很重要。  
+IDF 文件包含有关实验的顶级信息，
+包括标题，说明，提交者联系详细信息和协议。  
+SDRF 文件包含有关实验样本的基本信息，例如他们所属的实验组。
 
-Before we move on to the actual raw data import, we will briefly introduce the
-`ExpressionSet` class contained in the `r Biocpkg("Biobase")` package.
-It is commonly used to store microarray data in Bioconductor.
+在我们继续进行实际的原始数据导入之前，
+我们将简要介绍`r Biocpkg("Biobase")` 包中包含的 `ExpressionSet` 类。
+它通常用于在 Bioconductor 中存储微阵列数据。
 
 ## Bioconductor ExpressionSets
 
