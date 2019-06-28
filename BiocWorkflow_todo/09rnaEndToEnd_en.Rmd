@@ -285,37 +285,37 @@ SDRF 文件包含有关实验样本的基本信息，例如他们所属的实验
 
 ## Bioconductor ExpressionSets
 
-Genomic data can be very complex,
-usually consisting of a number of different components, e.g. information
-on the experimental samples, annotation of genomic features measured as well
-as the experimental data itself.
-In Bioconductor, the approach is taken that these components should be 
-stored in a single structure to easily manage the data.
+基因组数据可以非常复杂，
+通常由许多不同的组分组成，例如，
+有关实验样品的信息，测量的基因组特征的注释
+以及实验数据本身。
+在 Bioconductor 中， 采用的方法是将这些组件存储
+在一个单结构中以便于管理数据。
 
-The package `r Biocpkg("Biobase")` contains standardized data structures
-to represent genomic data. The `ExpressionSet` class is designed
-to combine several different sources of information (i.e. as contained in the 
-various MAGE-TAB files) into a single convenient
-structure. An ExpressionSet can be manipulated (e.g., subsetted, copied),
-and is the input to or output of many Bioconductor functions.
+`r Biocpkg("Biobase")`  包含标准化数据结构以表示基因组数据。
+`ExpressionSet` 类旨在将几个不同的信息源
+（即包含在各种 MAGE-TAB 文件中）组合
+成一个方便的结构。
+可以操纵 ExpressionSet（例如，子集化，复制）
+并且是许多 Bioconductor 函数的输入或输出。
 
-The data in an ExpressionSet consist of:
+ExpressionSet 中的数据包括：
 
-* **assayData**: Expression data from microarray experiments
-with microarray probes in rows and sample identifiers in columns
+* **assayData**: 来自微阵列实验的表达数据，其中每行是微阵列探针，每列是样品标识符。
+其中每行是微阵列探针，每列是样品标识符。
 * **metaData**
-    + **phenoData**: A description of the samples in the experiment with sample identifiers in rows and description elements in columns; holds the content of the SDRF file
-    + **featureData**: metadata about the features on the chip   
-    or technology used for the experiment with same rows as assayData by default and freely assignable columns
-    + further annotations for the features,
-    for example gene annotations from biomedical databases (annotation).
+    + **phenoData**: 实验中样本的描述，每行是样本标识符，每列是描述元素; 储存的是 SDRF 文件的内容。
+    + **featureData**: 有关芯片功能的元数据或者用于实验的技术，
+    默认情况下使用与 assayData 相同的行和可自由分配的列。
+    + 进一步注释特征，例如来自生物医学数据库（注释）的基因注释。
+    例如来自生物医学数据库（注释）的基因注释。
 
-* **experimentData**: A flexible structure to describe the experiment.
+* **experimentData**: 一种灵活的结构来描述实验。
 
-The ExpressionSet class coordinates all of these data, so that one does not 
-have to worry about the details. However, one should keep in mind that the rownames of the `phenoData` have to match the column names of the assay data, while the row names of the assay data have to match the 
-row names of the `featureData`. 
-This is  illustrated in Figure \@ref(fig:sumexp).
+ExpressionSet 类协调所有这些数据，因此不必
+担心细节。 但是，应该记住，`phenoData` 的 rownames （行名）必须与 assay data 的列名匹配，
+而 assayData 的行名必须与 `featureData` 的行名匹配。
+这在图1中说明。 \@ref(fig:sumexp).
 
 
 ```{r sumexp, fig.cap = "Structure of Bioconductor’s ExpressionSet class.", echo=FALSE, fig.show="asis", fig.width = 7, fig.height = 4.5}
@@ -354,20 +354,20 @@ polygon(c(50,65, 65, 50),c(56,56,65,65),col="darkseagreen3",border=NA)
 text(57.5,60.5,"sample IDs", cex = 1)
 ```
 
-You can use the functions ` pData ` and ` fData ` to extract
-the sample and feature annotation, respectively, from an ` ExpressionSet `.
-The function ` exprs ` will return the expression data itself as a matrix.
+您可以使用函数 ` pData ` 和 ` fData ` 分别从 
+` ExpressionSet ` 中提取样本和要素注记。
+函数 ` exprs ` 将表达式数据本身作为矩阵返回。
 
-# Import of annotation data and microarray expression data as "ExpressionSet"
+# 导入注释数据和微阵列表达数据为 "ExpressionSet"
 
-We import the SDRF file with the `read.delim` function from the raw data 
-folder in order to obtain the sample annotation.
+我们使用原始数据文件夹中的 `read.delim` 函数导入
+SDRF 文件，以获取样本注释。
 
-The sample names are given in the column Array.Data.File of the SDRF data table and will be used as rownames for the SDRF file.
+样本名称在 SDRF 数据表的 Array.Data.File 列中给出，并将用作 SDRF 文件的 rownames 。
 
-We turn the SDRF table into an `AnnotatedDataFrame` 
-from the `r Biocpkg("Biobase")` package that we
-will need later to create an `ExpressionSet` for our data [@Bioc].
+我们将 SDRF 表转换为 `r Biocpkg("Biobase")` 包中
+的 `AnnotatedDataFrame` ，稍后我们将需要为我们的数据
+创建一个 `ExpressionSet`[@Bioc].
 
 ```{r getSDRF}
 sdrf_location <- file.path(raw_data_dir, "E-MTAB-2967.sdrf.txt")
@@ -378,19 +378,19 @@ SDRF <- AnnotatedDataFrame(SDRF)
 ```
 
 
-We now create the Expression Set object 
-`raw_data`, which contains array data, pheno data
-(from the SDRF file) as well as the information 
-of the chip annotation package used.
+我们现在创建 Expression Set object 
+`raw_data`,它包含陈列数据，pheno data (表型数据)
+（来自 SDRF 文件） 以及所使用
+的芯片注释包的信息。
 
 
-The analysis of Affymetrix arrays starts with CEL files. These are the result
-of the processing of the raw image files using the Affymetrix software 
-and contain estimated probe intensity values. Each CEL file additionally 
-contains some metadata, such as a chip identifier. 
+Affymetrix 列阵的分析是从 CEL 文件开始。这些是使用 
+Affymetrix 软件处理原始图像文件
+并包含估计的探针强度值的结果。每个 CEL 文件还包含一些元数据，
+例如芯片标识符。
 
-We use the function `read.celfiles` from the `r Biocpkg("oligo") ` 
-package [@oligo] to import the files:
+我们使用 `r Biocpkg("oligo") ` 包[@oligo]中的 `read.celfiles`  
+函数导入文件：
 
 ```{r importCelfiles, results="hide", eval=TRUE, dependson="getSDRF", warning = FALSE }
 raw_data <- oligo::read.celfiles(filenames = file.path(raw_data_dir, 
@@ -399,41 +399,41 @@ raw_data <- oligo::read.celfiles(filenames = file.path(raw_data_dir,
 stopifnot(validObject(raw_data))
 ```
 
-This automatically creates an ExpressionSet,
-fills the sections "array data" with the data from the CEL files 
-and uses the correct chip annotation package, in this case
-`r Biocannopkg("pd.hugene.1.0.st.v1") ` (the 
-chip-type is also stored in the .CEL files). 
+这会自动创建一个 ExpressionSet,
+用 CEL 文件中的数据填充部分 "array data"
+并使用正确的芯片注释包，在本例中为 
+`r Biocannopkg("pd.hugene.1.0.st.v1") ` (
+芯片类型也存储在 .CEL 的文件)。
 
-Furthermore, we specified our `AnnotatedDataFrame` "`SDRF`" 
-created earlier from the SDRF file as `phenoData`. Thus, 
-we had to make sure to import the CEL files 
-in the order that corresponds to the SDRF table --- to enforce this, 
-we used the column `Array.Data.File` of the `SDRF` table as the `filenames` 
-argument.
+此外，我们将早先从 SDRF 文件创建的 `AnnotatedDataFrame`
+ "`SDRF`" 指定为 `phenoData`. 因此，
+我们必须确保按照与 SDRF 表对应的顺序导入 CEL 文件
+- 为了强制执行此操作，我们使用 `SDRF`
+表的 `Array.Data.File` 列作为 `filenames` 
+(文件名) 参数。
 
-Finally, we checked whether the object created is valid (e.g. sample names 
-match between the different tables).
+最后，我们检查了创建的对象是否有效
+(例如，不同表之间的样本名称是否匹配）。
 
-We now have a first look on the raw data.
+我们现在首先看一下原始数据。
 
-The `pData` function of the Biobase package directly accesses the phenoData in the ExpressionSet `raw_data`. With the `head()` function, we can view the 
-first six lines of the table. We have a look at the columns included 
-and retain only those columns that are related to the experimental 
-factors of interest.
+Biobase 包的 `pData` 函数直接访问 ExpressionSet `raw_data` 中的 phenoData。使用 `head()` 函数，我们可以查看
+表的前六行。我们需要查看包含的列，
+并仅保留与感兴趣的实验因子
+相关的列。
 
 ```{r inspectPhenoData, eval=TRUE }
 head(Biobase::pData(raw_data))
 ```
 
 
-The columns of interest for us are the following:
+我们感兴趣的列如下：
 
-  * identifiers of the individuals, i.e. columns "Source.Name", "Characteristics.individual."
-  * disease of the individual, i.e. "Factor.Value.disease."
-  * mucosa type, i.e. "Factor.Value.phenotype."
+  * 个人的标识符，即列名 "Source.Name", "Characteristics.individual."
+  * 个体的疾病，即名为 "Factor.Value.disease."
+  * 粘膜类型，即名为 "Factor.Value.phenotype."
 
-We now subselect the corresponding columns: 
+我们现在再次选择相应的列： 
 
 ```{r reassignpData, eval=TRUE}
 Biobase::pData(raw_data) <- Biobase::pData(raw_data)[, c("Source.Name",
@@ -442,29 +442,29 @@ Biobase::pData(raw_data) <- Biobase::pData(raw_data)[, c("Source.Name",
                                      "Factor.Value.phenotype.")]
 ```
 
-# Quality control of the raw data
+# 原始数据的质量控制
 
-The first step after the initial data import is the quality control of the data.
-Here we check for outliers and try to see whether the data clusters as expected, 
-e.g. by the experimental conditions. The expression intensity values are in the 
-assayData sub-object "exprs" and can be accessed by the `exprs(raw_data)` 
-function. The rows represent the microarray probes, i.e. 
-the single DNA locations on the chip, while the columns 
-represent one microarray, i.e. a sample of inflamed 
-and non-inflamed tissue of every patient, respectively. 
+初始数据导入后的第一步是数据的质量控制。 
+在这里，我们检查异常值并尝试查看数据是否按预期聚类，
+例如 由实验条件。 表达强度值在 
+assayData 子对象 "exprs" 中，并且可以由 `exprs(raw_data)` 
+函数访问。 每行代表微阵列探针，即 
+芯片上的单个 DNA 位置，
+而每列代表一个微阵列，
+即每个患者的发炎和非发炎组织的样品。
 
 ```{r inspectAssayData, eval=TRUE}
 Biobase::exprs(raw_data)[1:5, 1:5]
 ```
 
 
-For quality control, we take the log2 of `Biobase::exprs(raw_data)`, 
-as expression data is commonly analyzed on a logarithmic scale.
+对于质量控制，我们采用 `Biobase::exprs(raw_data) `的 log2，
+因为表达数据通常以 log 分析。
 
-We then perform a principal component analysis (PCA) and plot it (Figure 
-\@ref(fig:qualityControlRawDataPCA)). Every point in the plot 
-represents one sample, with the colour indicating the mucosa type 
-(inflamed vs non-inflamed) and the shape  indicating the disease (UC or CD).
+然后，我们执行主成分分析（PCA）并绘制它 \@ref(fig:qualityControlRawDataPCA))
+图中的每个点代表一
+个样本，颜色表示粘膜类型
+(发炎与未发炎）和表示疾病的形状（ UC 或 CD ）。
 
 
 
@@ -491,36 +491,36 @@ ggplot(dataGG, aes(PC1, PC2)) +
   scale_color_manual(values = c("darkorange2", "dodgerblue4"))
 ```
 
-The PCA plot (Figure \@ref(fig:qualityControlRawDataPCA), performed on 
-the log-intensity scale) of the raw data shows that the 
-first principal component differentiates between the diseases. This means that 
-the disease type is a major driver of gene expression differences.
-This might hinder our analysis, as we want to analyze the differential expression between inflamed and non-inflamed 
-tissues, independently of the disease a person suffers from. 
+原始数据的 PCA 图 (Figure \@ref(fig:qualityControlRawDataPCA), 在对数强度标度上进行
+) 显示 第一主成分 (first PC) 区分疾病。  
+这意味着
+疾病类型是基因表达差异的主要驱动因素。
+这可能会妨碍我们的分析，因为我们想要分析发炎组织和非发炎组织之间的差异表达，
+而不是人们患病的疾病的关系。
 
-We also represent the probe intensities via a boxplot graph with one box per
-individual microarray. (Figure \@ref(fig:qualityControlRawDataBox)). Note that the 
-`oligo::boxplot` function, i.e. the boxplot function of the oligo package, can take 
-expression sets as argument. It accesses the expression data and performs a 
-log2-transformation by default. We therefore can use `raw_data` as argument here.
+我们还通过箱形图图表示探针强度，
+每个单独的微阵列是有一个箱。(Figure \@ref(fig:qualityControlRawDataBox)). 注意， 
+`oligo::boxplot` 函数，即 oligo 包的 boxplot() 函数，
+可以将表达式集作为参数。
+它访问表达式数据并默认执行 log2 转换。 因此，我们可以在这里使用 `raw_data` 作为参数。
 
 ```{r qualityControlRawDataBox, fig.cap="Intensity boxplots of the log2–transformed raw data."}
 oligo::boxplot(raw_data, target = "core", 
                main = "Boxplot of log2-intensitites for the raw data")
 ```
 
-When looking at the boxplot (Figure 
-\@ref(fig:qualityControlRawDataBox)), we see that the intensity distributions of the 
-individual arrays are quite different, indicating the need for an appropriate 
-normalization, which we will discuss next.
+当查看箱形图 (Figure \@ref(fig:qualityControlRawDataBox)) 时，
+我们看到各个阵列的强度分布完全不同，
+这表明需要进行适当的归一化，
+我们将在下面讨论。
 
-Until now, we have only performed a very basic quality control; 
-more elaborate quality control plots are available in the package
-`r Biocpkg("arrayQualityMetrics")` [@AQM]. The package produces an html report, 
-containing the quality control plots together with a description of their
-aims and an identification of possible outliers. We do not discuss this tool in 
-detail here, but simply provide the code below, 
-which creates a report for our raw data. 
+到目前为止，我们只进行了非常基本的质量控制; 
+`r Biocpkg("arrayQualityMetrics")` [@AQM] 中提供了
+更精细的质量控制图。 该软件包可以生成一个 html 报告，
+其中包含质量控制图以及对其目标的描述以及可能的异常值的识别。
+我们在此不详细讨论此工具，
+只是提供下面的代码，
+它为我们的原始数据创建报告。
 
 ```{r arrayQualityMetricsRaw, eval = TRUE, warning=FALSE, message=FALSE}
 arrayQualityMetrics(expressionset = raw_data,
@@ -529,73 +529,73 @@ arrayQualityMetrics(expressionset = raw_data,
     intgroup = c("Factor.Value.disease.", "Factor.Value.phenotype."))
 ```
 
-# Background adjustment, calibration, summarization and annotation
+# 背景调整，校准，摘要和注释
 
-## Background adjustment
+## 背景调整
 
-After the initial import and quality assessment, the next step in processing of
-microarray data is background adjustment. This is essential because 
-a proportion of the measured probe intensities are due to non-specific 
-hybridization and the noise in the optical detection system. 
-Therefore, observed intensities need to be adjusted to 
-give accurate measurements of specific hybridization.
+在初始导入和质量评估之后，
+处理微阵列数据的下一步是背景调整。
+这是必要的因为测量的探针强度的一部分
+是由于非特异性杂交和光学检测系统中的噪声。
+因此，需要调整观察到的强度
+以给出特定杂交的准确测量。
 
-## Across-array normalization (calibration)
+## 跨阵列归一化（校准）
 
-Normalization across arrays is needed in order to be able
-to compare measurements from different array hybridizations 
-due to many obscuring sources of variation.
-These include different efficiencies of
-reverse transcription, labeling or hybridization
-reactions, physical problems with the arrays, reagent batch effects, 
-and laboratory conditions. 
+因为许多差异的来源并不明确，
+所以要标准化跨阵列以便能够比较来自不同阵列杂交的测量结果。
+这些包括逆转录，
+标记或杂交反应的不同效率，
+阵列的物理问题，
+试剂批次效应
+和实验室条件。 
 
-## Summarization
+## 概要
 
-After normalization, summarization is necessary to be done because on 
-the Affymetrix platform, transcripts are represented
-by multiple probes, that is multiple locations on the array. 
-For each gene, the background-adjusted and normalized intensities of all probes
-need to be summarized into one quantity that estimates an amount proportional to
-the amount of RNA transcript.
+我们必须在归一化后进行汇总，
+因为在Affymetrix平台上，
+转录本由多个探针表示，即阵列上的多个位置。
+对于每个基因，需要将所有探针的背景调整
+和标准化强度总结为一个量，
+让预计与 RNA 转录物的量成比例的量。
 
-After the summarization step, the summarized data can be annotated with various
-information, e.g. gene symbols and ENSEMBL gene identifiers. There is an
-annotation database available from Bioconductor 
-for our platform, namely the package
-`r Biocannopkg("hugene10sttranscriptcluster.db") `.
+在汇总步骤之后，汇总数据可以用各种信息注释，
+例如，基因符号和 ENSEMBL 基因标识符。
+Bioconductor 为我们的平台提供了一个注释数据库，
+即
+`r Biocannopkg("hugene10sttranscriptcluster.db") `包。
 
-You can view its content like this:
+您可以像这样查看其内容：
 
 ```{r annotationDataBaseContent, eval = TRUE}
 head(ls("package:hugene10sttranscriptcluster.db"))
 ```
 
-Additional information is available from the reference manual of the package.
-Essentially, the package provides a mapping from the transcript cluster 
-identifiers to the various annotation data.
+更多信息可从包装的参考手册中获得。
+本质上该包提供从转录本簇标识
+符到各种注释数据的映射。
 
-## Old and new "probesets" of Affymetrix microarrays
+## Affymetrix 微阵列的新旧 “探针组”
 
-Traditionally, Affymetrix arrays (the so-called 3' IVT arrays)
-were probeset based: a certain fixed group of probes were part of a probeset
-which represented a certain gene or transcript (note however, that a
-gene can be represented by multiple probesets).
+传统来说，Affymetrix 阵列（所谓的3'IVT 阵列）基于探针组：
+某一固定探针组是探针组的一部分，
+该探针组代表某种基因或转录物
+但请注意，基因可由多个探针组表示）。
 
-The more recent "Gene" and "Exon" Affymetrix arrays are exon based and hence 
-there are two levels of summarization to get to the gene level. The "probeset" summarization leads to the exon level. The gene / transcript level is given by "transcript clusters". Hence, the appropriate annotation package for 
-our chip type is called
+最近的“基因”和“外显子” Affymetrix 阵列是基于外显子的，
+因此有两个级别的总结可以达到基因水平。探针组”总结导致外显子水平。基因/转录物水平由“转录物簇”给出。 因此，我们的芯片类型的适当注释包
+名为 
 `r Biocpkg("hugene10sttranscriptcluster.db") `.
 
-"Gene" arrays were created as affordable versions of the "Exon" arrays, by only 
-taking the "good" probes from the Exon array. Initially on the Exon array, 
-at least four probes were part of one "Exon". 
-With the thinned out "Gene" array, many probesets were made up of three or fewer 
-probes. This is visualized in Figure 
-\@ref(fig:DifferenceBetweenExonAndGeneTypeArrays): Single probesets 
-are indicated by single colours; probesets representing one gene 
-are indicated by a colour shade: e.g., all yellow probes belong to one Exon, 
-and all yellow, orange and red probesets belong to one gene: 
+通过仅从外显子阵列中获取“好”的探针，
+“基因”阵列被创建为“外显子”阵列的负担得起的版本。 
+最初在外显子阵列上，至少有四个探针是一个“外显子”的一部分。
+通过稀释的“基因”阵列，许多探针组由三个或更少的探针组成。
+这在图4 中可视化：\@ref(fig:DifferenceBetweenExonAndGeneTypeArrays)
+单个探针组由单色标注; 
+表示一个基因的探针组用色调表示：
+例如，所有黄色探针属于一个外显子，
+并且所有黄色，橙色和红色探针组属于一个基因： 
 
 ```{r DifferenceBetweenExonAndGeneTypeArrays, fig.width=7, fig.height=6, echo=FALSE, fig.cap="Visualization of the difference between \"Exon\" type array (left) and \"Gene\" type array (right)."}
 library(grid)
@@ -634,64 +634,64 @@ grid.rect(x=dat$x,y=dat$y, height=0.1, width=0.1, hjust=0,vjust=0,vp=vp2,
 ```
 
 
-On the left side, we see plenty of probes for each Exon / probeset 
-(i.e. each colour): therefore, a summarization on the probeset / exon level 
-makes sense. In the gene type array, however, only a small proportion of the 
-original probes per probeset is included. Thus, a summarization on the 
-probeset / exon level  is not recommended for "Gene" arrays 
-but nonetheless possible by using the `r Biocannopkg("hugene10stprobeset.db") ` 
-annotation package.
+在左侧，我们看到每个外显子/探针组（即每种颜色）有大量探针：
+因此，探针组/外显子水平上的摘要是合理的。
+然而，在基因型阵列中，
+每个探针组仅包括一小部分原始探针。
+因此，不建议对 “基因” 阵列使用探针组/外显子级别进行汇总，
+但仍然可以使用 `r Biocannopkg("hugene10stprobeset.db") ` 
+注释包。
 
-Note that furthermore, there are also no longer designated match/mismatch probes 
-present on "Gene" and "Exon" type chips. The mismatch probe was initially 
-intended as base-level for background correction, but hasn't prevailed 
-due to more elaborate background correction techniques that 
-do not require a mismatch probe. 
+注意，此外，“基因”和“外显子”型芯片上
+也不再存在指定的匹配/错配探针。 
+错配探针最初用作背景校正的基础水平，
+但由于更精细的背景校正技术
+不需要不匹配探针而没有普及。
 
-## One-step preprocessing in oligo
+## 一步预处理寡核苷酸
 
-The package `r Biocpkg("oligo") ` allows us to perform background correction, 
-normalization and summarization in one single step using a deconvolution 
-method for background correction, quantile normalization and
-the RMA (robust multichip average) algorithm for summarization.
+`r Biocpkg("oligo") ` 包允许我们在一个步骤里使用用于背景校正，
+归一化，和汇总。
+这个包使用反卷积方法来背景校正，分位数归一化和
+RMA (robust multichip average) 算法来汇总。
 
-This series of steps as a whole is commonly referred to as RMA algorithm,
-although strictly speaking RMA is merely a summarization method
+整个系列步骤通常称为 RMA 算法，
+但严格来说 RMA 仅仅是一种汇总的方法
 [@Irizarry_2003; @Bolstad_2003; @Irizarry_2003a].
 
-# Relative Log Expression data quality analysis
+# 相对日志表达式数据质量分析
 
-Before calibrating and evaluating the data, we want to perform another quality 
-control procedure, namely Relative Log Expression (RLE), as described in 
-the article by Gandolfo et al [@Gandolfo_2018]. To this end, we first 
-perform an RMA without prior normalization: 
+在校准和评估数据之前，我们要执行另一个质量控制程序，
+即相对对数表达式（RLE），
+如 Gandolfo et al [@Gandolfo_2018]。 
+我们首先执行没有事先规范化 RMA：
 
 ```{r RMAcalibrationForRLE, eval=TRUE}
 palmieri_eset <- oligo::rma(raw_data, target = "core", normalize = FALSE)
 ```
 
-Further details on the RMA algorithm will be provided after RLE analysis, when 
-the "full" RMA is carried out, including normalization. 
+在 RLE 分析之后，或当执行 “完整” RMA（包括归一化）时， 
+将提供关于 RMA 算法的进一步细节。
 
-## Computing the RLE
+## 计算 RLE
 
-The RLE is performed by calculating the median log2 intensity of every 
-transcript across all arrays. 
+通过计算所有阵列上每个转录物的 log2 
+强度中值来进行 RLE。
 
-We do this by calculating the row medians of `exprs(palmieri_eset)`, 
-as the transcripts are represented by the rows and the single microarrays 
-by the columns. 
+我们通过计算 `exprs(palmieri_eset)`的行中值来做到这一点，
+因为转录本由每行表示，
+单个微阵列由每列表示。
 
-Note that we do not have to apply the log2 manually, 
-as the output data of the RMA function is in log2 scale by default. 
+注意，我们不必手动应用 log2，
+因为默认情况下 RMA 函数的输出数据为 log2 比例。
 
-We then substract this transcript median intensity from every 
-transcript intensity via the `sweep` function. 
+然后我们通过  `sweep`函数从每个转录物强度中
+减去该转录物中值强度。
 
-## Plotting the RLE
+## 绘制 RLE 图
 
-We finally reshape the data into a format in which we can use to create a boxplot 
-for each array, as before:
+我们最终将数据重新整形为一种格式，我们可以使用这种格式 
+为每个数组创建一个箱形图 (boxplot) ，如前所述：
 
 
 ```{r boxplotDataForRLETidy, fig.cap="Boxplot for the RLE values", warning=FALSE}
@@ -713,34 +713,34 @@ ggplot2::ggplot(RLE_data_gathered, aes(patient_array,
                                   face = "bold"))
 ```
 
-Note that the y-axis now displays for each microarray the deviation 
-of expression intensity from the median expression of the respective single 
-transcripts across arrays.
+注意，现在 y 轴显示的是针对每个微阵列表达强度
+与跨阵列的相应单个转录物
+的表达中值的偏差。
 
-Boxes with a larger extension therefore indicate an unusually high deviation 
-from the median in a lot of transcripts, suggesting that these arrays
-are different from most of the others in some way.
+因此，具有较大延伸的盒子表示在许多转录物中
+与中值的异常高偏差，
+表明这些阵列在某些方面与大多数其他阵列不同。
 
-Boxes that are shifted in y-direction indicate a systematically higher or lower 
-expression of the majority of transcripts in comparison to most of the other 
-arrays. This could be caused by quality issues or batch effects. 
+与大多数其他阵列相比，在 y 方向上移位的框表示
+大多数转录物的系统性更高或更低的表达。
+这可能是由质量问题或批量效应引起的。 
 
-Therefore, if shape and median of a given box varies too much from the 
-bulk, they should be inspected and potentially removed.
+因此，如果给定盒子的形状和中位数与体积相差太大，
+则应检查并可能将其移除。
 
-By inspecting the boxplot in Figure \@ref(fig:boxplotDataForRLETidy), 
-five arrays could be considered as outliers:
-2826_I, 2826_II, 3262_II, 3302_II and 3332_II are negatively y-shifted. 
+通过检查图 5 中的箱线图 \@ref(fig:boxplotDataForRLETidy), 
+可以将五个阵列视为异常值:
+2826_I，2826_II，3262_II，3302_II 和 3332_II 被负 y 移位。 
 
-We will keep these samples in mind for heatmap cluster analysis later on in 
-the workflow. Arrays that are confirmed to be outliers by heatmap 
-analysis could be removed for subsequent analysis.
+我们将记住这些样本，
+以便稍后在工作流程中进行热图聚类分析。 
+通过热图分析确认为异常值的阵列可以在后续分析前移除。
 
 
-# RMA calibration of the data
+# RMA 校准数据
 
-Now, we can apply the full RMA algorithm to our data in order to 
-background-correct, normalize and summarize:
+现在，我们可以将完整的 RMA 算法应用于我们的数据，
+以便进行背景校正，规范化和总结：
 
 ```{r RMAcalibrationWITHnormalization, eval=TRUE}
 palmieri_eset_norm <- oligo::rma(raw_data, target = "core")
