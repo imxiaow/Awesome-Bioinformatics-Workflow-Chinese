@@ -746,63 +746,63 @@ ggplot2::ggplot(RLE_data_gathered, aes(patient_array,
 palmieri_eset_norm <- oligo::rma(raw_data, target = "core")
 ```
 
-The parameter `target` defines the degree of summarization, the
-default option of which is "core", using transcript clusters containing
-"safely" annotated genes. For summarization on the exon level (not recommended for Gene
-arrays), one can use "probeset" as the target option.
-Although other methods for background correction and normalization exist,
-RMA is usually a good default choice.
-RMA shares information across arrays and
-uses the versatile quantile normalization method that
-will make the array intensity distributions match. However, it is preferable 
-to apply it only after outliers have been removed. 
-The quantile normalization algorithm used by RMA
-works by replacing values by the average of identically
-ranked (within a single chip) values across arrays. A more detailed 
-description can be found on the [Wikipedia page](https://en.wikipedia.org/wiki/Quantile_normalization).
+参数 `target` 用来定义摘要的程度，
+默认选项是“核心”，
+使用含有“安全”注释基因的转录物簇。对于外显子级别的汇总（不建议用于基因阵列)，
+可以使用 "probeset" 作为 target 选项。
+虽然存在其他背景校正和归一化方法，
+但 RMA 通常是一个很好的默认选择。
+RMA 跨阵列共享信息，
+并使用通用的分位数归一化方法，
+使阵列强度分布匹配。但是，最好只在
+删除异常值后才应用它。
+RMA 使用的分位数归一化算法
+通过将数值替换为数组中相同排名（单个芯片内）值的平均值来工作。
+更详细的描述可以在
+维基百科页面上找到 [Wikipedia page](https://en.wikipedia.org/wiki/Quantile_normalization).
 
-An alternative to quantile normalization would be the `r Biocpkg("vsn") ` 
-algorithm,that performs background correction and normalization by robustly
-shifting and scaling intensity values within arrays before log-transforming
-them. This is less "severe" than quantile normalization [@vsn]. 
+分位数归一化的替代方案是 `r Biocpkg("vsn") ` 算法，
+其通过在对数变换之前对阵列内的强度值
+进行鲁棒地移位和缩放来执行背景校正和归一化。
+这跟分位数归一化 [@vsn] 比不那么“严重”。
 
-## Some mathematical background on normalization (calibration) and background correction
+## 关于归一化（校准）和背景校正的一些数学背景知识
 
-A generic model for the value of the intensity \(Y\) of a single probe on
-a microarray is given by
+微阵列上单个探针的强度 \(Y\) 值的通用模型
+由下式给出：
 
 \[
     Y = B + \alpha \cdot S
 \]
     
-where B is a random quantity due to background noise, usually composed of
-optical effects and non-specific binding, \(\alpha\) is a gain factor, 
-and \(S\) is the amount of measured specific binding. The signal \(S\) 
-is considered a random variable as well and accounts for measurement 
-error and probe effects.
-The measurement error is typically assumed to be multiplicative so we can write:
+其中 B 是由于背景噪音引起的随机数量，
+通常由光学效应和非特异性结合组成， \(\alpha\) 是增益因子，
+ \(S\) 是测量的特异性结合量。 信号 \(S\) 
+也被认为是随机变量， 
+并且考虑了测量误差和探测效应。
+通常假设测量误差是乘法的，因此我们可以写：
 
 \[
     \log(S) = \theta + \varphi + \varepsilon
 \]
     
-Here \(\theta\) represents the logarithm of the true abundance,
-\(\varphi\) is a probe-specific effect, and $\varepsilon$ accounts for the 
-nonspecific error.
-This is the additive-multiplicative-error model for microarray data used 
-by RMA and also the `r Biocpkg("vsn") ` algorithm [@vsn]. The algorithms differ 
-in the way that \(B\) is removed and an estimate of \(\theta\) is obtained.
+这里 \(\theta\) 表示真实丰度的对数，
+\(\varphi\) 是探针特异性效应 $\varepsilon$ 表示
+非特异性误差。
+这是 RMA 使用的微阵列数据的加法 - 乘法 - 误差模型
+以及 `r Biocpkg("vsn") ` 算法 [@vsn]. 算法的不同之处
+在于去除 \(B\) 并获得 \(\theta\) 的估计。
 
 
-## Quality assessment of the calibrated data
+## 校准数据的质量评估
 
-We now produce a clustering heatmap and another PCA plot using the 
-calibrated data. 
+我们现在使用校准数据生成聚类热图
+和另一个 PCA 图。
 
-**PCA analysis**
+**PCA 分析**
 
-First, we perform a PCA analysis of the calibrated data analogously 
-to the one with the raw data:
+首先，我们对校准数据进行 PCA 分析，
+类似于原始数据：
 
 ```{r PCAMetricsCalibrated, fig.cap = "PCA plot of the calibrated, summarized data.", eval = TRUE }
 exp_palmieri <- Biobase::exprs(palmieri_eset_norm)
@@ -829,18 +829,18 @@ ggplot(dataGG, aes(PC1, PC2)) +
   scale_color_manual(values = c("darkorange2", "dodgerblue4"))
 ```
 
-In comparison to the first PCA analysis before RMA (Figure \@ref(fig:qualityControlRawDataPCA)), we see that now the first principal 
-component separates between the tissues types (Figure \@ref(fig:PCAMetricsCalibrated)).
-This indicates that now differential expression between the tissue types is the
-dominant source of variation. Note that the second principal component
-separates the diseases.
+与 RMA 之前的第一次 PCA 分析相比 (Figure \@ref(fig:qualityControlRawDataPCA)), 我们看到现在第一个主要成分 PC 
+在组织类型之间分离 (Figure \@ref(fig:PCAMetricsCalibrated))。
+这表明现在组织类型之间的差异表达
+是变异的主要来源。 注意，第二 PC
+分离疾病。
 
-**Heatmap clustering analysis**
+**热图聚类分析**
 
-We want to plot a heatmap with the sample-to-sample distances with the 
-sample names as row-names. Also, we want to see how well the samples 
-cluster for phenotype (inflamed and non-inflamed tissue) and disease 
-(UC and CD), respectively. We use row annotation for that: it means that these features get a colour code and will be displayed to the left of each row. 
+我们想要绘制具有样本到样本距离的热图，
+样本名称为行名。 此外，我们希望看到样本分别表现为表型
+（发炎和非发炎组织）和疾病（UC和CD）的程度。 
+我们使用行注释：这意味着这些功能获得颜色代码并将显示在每行的左侧。
 
 ```{r rownamesForHeatmap, fig.height = 8.5, fig.width = 7, eval = TRUE, echo=TRUE}
 phenotype_names <- ifelse(str_detect(pData
@@ -858,17 +858,17 @@ row.names(annotation_for_heatmap) <- row.names(pData(palmieri_eset_norm))
 
 ```
 
-In order to map the sample-to-sample distances, we first compute the distances 
-using the `dist` function. We need to transpose the expression values since
-the function computes the distances between the rows (i.e. genes in our case) by
-default. The default distance is the Euclidean one. However this can be
-changed and we choose the Manhattan distance here (it uses absolute 
-distances along rectangular paths instead of squared distances 
-of the direct path), as it is more robust. 
-We set the diagonal of the distance matrix to ` NA ` in order 
-to increase the contrast of the color coding. Those diagonal entries 
-do not contain information since the distance of a sample 
-to itself is always equal to zero.
+为了映射样本到样本的距离， 
+我们首先使用 `dist` 函数计算距离。我们需要转换表达式值，
+因为函数默认计算行之间的距离（例如我们的基因)。
+默认距离是欧几里德距离。然而，这可以改变，
+我们在这里选择曼哈顿距离 
+（它使用沿矩形路径的绝对距离而不是直接路径的平方距离），
+因为它更稳健。
+我们将距离矩阵的对角线设置为 ` NA ` ，
+以增加颜色编码的对比度。 
+那些对角线条目不包含信息，
+因为样本到自身的距离总是等于零。
 
 
 ```{r HeatmapWithAnnotation, fig.height = 8.5, fig.width = 7, fig.cap="Heatmap of the sample-to-sample distances"}
@@ -893,39 +893,39 @@ pheatmap(dists, col = (hmcol),
          legend_labels = (c("small distance", "large distance")),
          main = "Clustering heatmap for the calibrated samples")
 ```
-On the heatmap plot (Figure \@ref(fig:HeatmapWithAnnotation)) we also see that 
-the samples do not cluster strongly by tissue, confirming the impression 
-from the PCA plot (Figure \@ref(fig:PCAMetricsCalibrated)) that the separation 
-between the tissues is not perfect. The yellow stripes in the heatmap might correspond
-to outliers that could potentially be removed: the ones that could be flagged 
-here are 2826_II, 3262_II, 3271_I, 2978_II and 3332_II. 
-2826_II, 3262_II and 3332_II were found to be outliers in both RLE and heatmap 
-analysis and could therefore potentially be removed; however, in order 
-to stay as close as possible to the
-original paper, we continue with the complete set of samples.
-Note again that more elaborate metrics to identify and remove outliers 
-are provided by the `r Biocpkg("arrayQualityMetrics")` package.
+在热图 (Figure \@ref(fig:HeatmapWithAnnotation)) 中，
+我们还发现样品不会被组织强烈聚集，
+证实了 PCA 图 (Figure \@ref(fig:PCAMetricsCalibrated)) 的印象，
+即组织之间的分离并不完美。热图中的黄色条纹
+可能对应于可能被删除的异常值：这里可以标记的异常值
+是 2826_II, 3262_II, 3271_I, 2978_II 和 3332_II。
+因为发现 2826_II, 3262_II 和 3332_II 在 RLE 和热图分析中都是异常值，
+因此可能被删除; 但是，
+为了尽可能接近原始论文，
+我们继续提供完整的样本集。
+注意  `r Biocpkg("arrayQualityMetrics")`包提供了更精细的标识
+来识别和删除异常值。
 
 
-# Filtering based on intensity 
+# 根据强度过滤
 
-We now filter out lowly expressed genes. Microarray data commonly show
-a large numberof probes in the background intensity range. These probes 
-also do not  change much across arrays. Hence they combine a low variance 
-with a low  intensity. Thus, they could end up being detected as differentially 
-expressed although they are barely above the "detection" limit and are not very 
-informative in general. 
+我们现在过滤掉低表达的基因。微阵列数据通常
+在背景强度范围内显示大量探针。 这些探针
+在数组之间也没有太大变化。因此，
+它们结合了低方差和低强度。因此，它们最终可能被检测为差异表达，
+尽管它们几乎不高于 “detection” 限制并且
+通常不是非常有用的信息。 
 
-We will perform a "soft" intensity based filtering here, since this 
-is recommended by the `r Biocpkg("limma")` [@limma; @Smyth_2004] user guide 
-(a package we will use below for the differential 
-expression analysis). 
+我们将在这里执行基于“软”强度的过滤，因为这是
+ `r Biocpkg("limma")` [@limma; @Smyth_2004] 用户指南推荐的
+(我们将在下面用于差异表达式分析的包
+差异表达式分析的包)。 
 
-However, note that a variance based filter might exclude a similar set of 
-probes in practice. 
-For intensity-based filtering, we calculate the row-wise medians from the 
-expression data, as they represent the transcript medians, and assign them to 
-`palmieri_medians`. From this we create a histogram: 
+但请注意，基于方差的过滤器在实践中可能会排除
+一组类似的探测。  
+对于基于强度的过滤，我们从表达式数据计算行式中位数， 
+因为它们代表转录中位数，并将它们分配给
+`palmieri_medians`。从这里我们创建一个直方图：
 
 ```{r IntensityBasedManualFiltering, fig.cap="Histogram of the median intensities per gene"}
 palmieri_medians <- rowMedians(Biobase::exprs(palmieri_eset_norm))
@@ -936,14 +936,14 @@ hist_res <- hist(palmieri_medians, 100, col = "cornsilk1", freq = FALSE,
             xlab = "Median intensities")
 ```
 
-In the histogram of the gene-wise medians (Figure 
-\@ref(fig:IntensityBasedManualFiltering)), we 
-can clearly see an enrichment of low medians on the left hand side. 
-These represent the genes we want to filter. In order to infer a cutoff from the 
-data, we inspect the histogram: We visually set a cutoff line `man_threshold` 
-to the left of the histogram peak in order not to exclude too many genes. In our 
-example, we choose a threshold of 4. We plot the same histogram as before 
-and add the threshold line with the `abline()` function:
+在基因中位数的直方图中 (Figure 
+\@ref(fig:IntensityBasedManualFiltering))，
+我们可以清楚地看到左侧低中值的富集。
+这些代表了我们想要过滤的基因。 为了推断数据的截止，
+我们检查直方图：我们在直方图峰的左侧可视地设置截止线 `man_threshold` 
+以便不排除太多基因。  在我们的示例中，
+我们选择阈值 4 。我们绘制与之前相同的直方图，
+并使用 `abline()` 函数添加阈值线：
 
 ```{r setManualThreshold, fig.cap="Histogram of the median intensities per gene with manual intensity filtering threshold (red line)."}
 man_threshold <- 4
