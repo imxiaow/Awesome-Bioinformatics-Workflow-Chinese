@@ -956,11 +956,11 @@ hist_res <- hist(palmieri_medians, 100, col = "cornsilk", freq = FALSE,
 abline(v = man_threshold, col = "coral4", lwd = 2)
 ```
 
-Transcripts that do not have intensities larger than the threshold in 
-at least as many arrays as the smallest experimental group are excluded. 
+排除在至少与最小实验组一样多的阵列中
+不具有大于阈值的强度的转录物。 
 
-In order to do so, we first have to get a list with the number 
-of samples (=arrays) (`no_of_samples`) in the experimental groups: 
+为了做到这一点，我们首先必须得到一个列表，
+其中包含实验组中的样本数（=数组）(`no_of_samples`):
 
 ```{r expGroups, dependson="PCAMetricsCalibrated"}
 no_of_samples <- 
@@ -970,21 +970,21 @@ no_of_samples
 ```
 
 
-We now filter out all transcripts 
-that do not have intensities greater than the threshold in at least 
-as many arrays as the smallest experimental group (`r min(no_of_samples)`) 
-which we  define as `samples_cutoff`. 
+我们现在过滤掉所有
+不具有大于阈值强度的转录本，
+至少与我们定义为 (`r min(no_of_samples)`) 
+ `samples_cutoff` 一样多。
 
-A function `idx_man_threshold` is then applied to each row, i.e. 
-to each transcript  across all arrays.
-It evaluates whether the number of arrays where the median intensity passes the
-threshold (`sum(x > man_threshold)`) is greater than the `samples_cutoff` and 
-returns TRUE or FALSE for each row, i.e. each transcript.
+然后将函数 `idx_man_threshold` 应用于每一行，
+即应用于所有数组的每个转录本。
+它评估中值强度超过阈值的数组的数量
+(`sum(x > man_threshold)`) 是否大于 `samples_cutoff` 并且
+对于每一行（即每个转录本）返回 TRUE 或 FALSE。
 
-We then create a table of `idx_man_threshold` to summarize the results and
-get an overview over how many genes are filtered out. 
-In the last step, we subset our expression set to `palmieri_manfiltered` 
-and keep the TRUE elements of `idx_man_threshold`.
+然后，我们创建一个 `idx_man_threshold` 表来汇总结果，
+并概述过滤掉多少基因。 
+在最后一步中，我们将表达式集合为 `palmieri_manfiltered`，
+并保留 `idx_man_threshold`的 TRUE 元素。
 
 ```{r filteringOfLowIntensity_transcripts}
 samples_cutoff <- min(no_of_samples)
@@ -998,12 +998,12 @@ palmieri_manfiltered <- subset(palmieri_eset_norm, idx_man_threshold)
 ```
 
 
-# Annotation of the transcript clusters
+# 抄本集群的注释
 
-Before we continue with the linear models for microarrays and differential
-expression, we first add "feature data", i.e. annotation
-information to the transcript cluster identifiers stored in the featureData of
-our ExpressionSet: 
+在继续使用微阵列和差异表达的线性模型之前，
+我们首先将“特征数据”，
+即注释信息添加到存储在 ExpressionSet 的 featureData 
+中的转录集群标识符：
 
 ```{r annotateData, eval=TRUE, dependson="intensityBasedFiltering", message = FALSE}
 anno_palmieri <- AnnotationDbi::select(hugene10sttranscriptcluster.db,
@@ -1014,20 +1014,20 @@ anno_palmieri <- AnnotationDbi::select(hugene10sttranscriptcluster.db,
 anno_palmieri <- subset(anno_palmieri, !is.na(SYMBOL))
 ```
 
-We used the function `select` from `r Biocpkg("AnnotationDbi") ` to query 
-the gene symbols and associated short descriptions for the transcript clusters. 
-For each cluster, we added the gene symbol (`SYMBOL`) and a short description
-of the gene the cluster represents (`GENENAME`). 
+我们使用 `r Biocpkg("AnnotationDbi") ` 中的 `select` 来查询
+转录本簇的基因符号和相关的简短描述。
+对于每个簇，我们添加了基因符号 (`SYMBOL`) 和簇代表的基因
+的简短描述 (`GENENAME`)。
 
-In a second step, we filtered out the probes that do not map to a gene,
-i.e. that do not have a gene symbol assigned. 
+在第二步中，我们过滤掉了未映射到基因的探针，
+即没有分配基因符号的探针。
 
-## Removing multiple mappings 
+## 删除多个映射
 
-Many transcript-cluster identifiers will map to multiple gene symbols, i.e. 
-they can't be unambigously assigned.
+许多转录物簇标识符将映射到多个基因符号，
+即它们不能被明确地分配。
 
-We compute a summary table in the code below to see how many there are:
+我们在下面的代码中计算一个汇总表，看看有多少：
 
 
 ```{r multipleMappings, dependson="annotateData"}
@@ -1046,25 +1046,25 @@ probe_stats <- anno_filtered
 nrow(probe_stats)
 ```
 
-First, we grouped `anno_palmieri` by their PROBEID; that way, 
-the subsequent operations are not carried through for each single row, 
-but for each  group, i.e. each PROBEID.
-We then summarized the groups and indicate the number of different genes 
-assigned to a transcript cluster in the column `no_of_matches`. 
-Finally, we filtered for PROBEIDs with multiple matches, 
-i.e. `no_of_matches > 1`.
+首先，我们用他们的 PROBEID 对 `anno_palmieri`  进行了分组; 
+这样，后续操作不会针对每一行进行，
+而是针对每个组，即每个 PROBEID 。
+然后，我们对这些组进行了总结，
+并在  `no_of_matches` 列中指出了分配给转录物簇的不同基因的数量。
+最后，我们使用多个匹配过滤了 PROBEIDs ，
+即 `no_of_matches > 1`。
 
-With `dim(probe_stats)`, we could see how many 
-probes have been mapped to multiple genes.
+使用 `dim(probe_stats)`， 我们可以看到
+有多少探针被映射到多个基因。
 
-We have close to 2000 transcript clusters that map to multiple gene symbols.
-It is difficult to decide which mapping is "correct". Therefore,
-we exclude these transcript clusters. 
+我们有接近 2000 个转录物簇，映射到多个基因符号。
+很难确定哪个映射是“正确的”。
+因此，我们排除这些转录本群集。 
 
-We want to remove those probe IDs that match the ones in `probe_stats`, 
-as those are the probes with multiple mappings. We assign these IDs 
-to the variable `ids_to_exclude`. Then, we generate `palmieri_final`, 
-an expression set without the `ids_to_exclude`. 
+我们想要删除那些与 `probe_stats` 中的 probe IDs 匹配的 ID。
+因为它们是具有多个映射的探测器。我们将这些 ID
+分配给变量 `ids_to_exclude`。然后，我们生成 `palmieri_final`, 
+一个没有 `ids_to_exclude`的表达式集。
 
 ```{r excludeMultipleMappingsFromAssayData, dependson="multipleMappings"}
 ids_to_exlude <- (featureNames(palmieri_manfiltered) %in% probe_stats$PROBEID)
@@ -1076,29 +1076,29 @@ palmieri_final <- subset(palmieri_manfiltered, !ids_to_exlude)
 validObject(palmieri_final)
 ```
 
-As we have just excluded probe IDs from the assay data, we now have 
-to also exclude them from the feature data `anno_palmieri`:
+由于我们刚刚从化验数据中排除了 probe IDs，
+我们现在还必须将它们从特征数据 `anno_palmieri`中排除：
 
 ```{r recallAnnoPalmieri}
 head(anno_palmieri)
 ```
 
-Recall that `fData` enables us to access the feature data of an expression set.
-Until now, no feature data whatsoever is stored in the `fData(palmieri_final)`.
-Only the row names are the row names of the assay data by default, which are the 
-PROBEIDs of the transcripts.
+回想一下， `fData` 使我们能够访问表达式集的特征数据。
+到目前为止，没有任何特征数据存储在 `fData(palmieri_final)` 中。
+默认情况下，只有行名称是化验数据的行名称，它们是转录本的
+PROBEIDs。
 
-Therefore, we generate a column PROBEID in `fData(palmieri_final)` and 
-assign the row names of `fData(palmieri_final)` to it:
+因此，我们在 `fData(palmieri_final)`中生成一列 PROBEID，
+并为其分配 `fData(palmieri_final)` 的行名：
 
 ```{r excludeMultipleMappingsFromFeatureData}
 fData(palmieri_final)$PROBEID <- rownames(fData(palmieri_final))
 ```
 
-Then, we left-join `fData(palmieri_final)`with `anno_palmieri`, which already contains 
-the columns "SYMBOL" and "GENENAME".
-A left-join keeps the rows and columns of the first argument 
-and adds the corresponding column entries of the second argument:
+然后，我们左手连接数据 `fData(palmieri_final)` 和 `anno_palmieri`，
+它已经包含 columns "SYMBOL" 和 "GENENAME" 列。
+left-join 保留第一个参数的行和列， 
+并添加第二个参数的相应列条目：
 
 ```{r excludeMultipleMappingsFromFeatureData2}
 fData(palmieri_final) <- left_join(fData(palmieri_final), anno_palmieri)
@@ -1110,75 +1110,75 @@ rownames(fData(palmieri_final)) <- fData(palmieri_final)$PROBEID
 validObject(palmieri_final)
 ```
 
-By left-joining with `anno_palmieri`, we thus add the "SYMBOL" and "GENENAME" 
-columns from `anno_palmieri` for only the PROBEIDs that are in 
-`fData(palmieri_final)` and thus get the feature Data for the filtered probes.
+通过与 `anno_palmieri` 的左连接，我们因此只为 `anno_palmieri` 中的 
+"SYMBOL" 和 "GENENAME" 列添加了 `fData(palmieri_final)` 中的 
+PROBEID ，从而获得过滤探测的特征数据。
 
 
-## Building custom annotations
+## 构建自定义注释
 
-Alternatively, one can re-map the probes of the array
-to a current annotation. A workflow to do this for Illumina arrays is given in
-@Arloth_2015.
-Essentially, the individual probe sequences are re-aligned to an in-silico
-"exome" that consists of all annotated transcript exons.
+或者，可以将阵列的探针重新映射到当前注释。
+在 @Arloth_2015 中给出了为 Illumina 阵列执行此操作的工作流程。 
+基本上，
+将各个探针序列重新比对由包含所有注释的
+转录物外显子的计算机“外体组”。
 
-In any case, the package `r Biocpkg("pdInfoBuilder") ` can be used to build 
-customannotation packages for use with `r Biocpkg("oligo") `. 
-In order to do this, PGF / CLF files (called "Library files" on the Affymetrix 
-website) as well as the probeset annotations are required. 
-The probesets typically represent small stretches 
-of the genome (such as a single exon) and multiple probesets
-are then used to form a transcript cluster.
+在任何情况下，`r Biocpkg("pdInfoBuilder") ` 包都可用于构建用于
+`r Biocpkg("oligo") ` 的 customannotation 包。
+为此，需要 PGF / CLF 文件（在 Affymetrix 网站上称为“库文件”）
+以及探针集注释。
+探针组通常代表基因组的小片段
+（例如单个外显子），
+然后使用多个探针组形成转录物簇。
 
-The CLF file contains information about the location of
-individual probes on the array. The PGF file then contains the individual probe
-sequences and shows the probeset they belong to. Finally, the probeset 
-annotation .csv then contains information about which probesets are used
-in which transcript cluster. Commonly, multiple probesets are used in one
-transcript cluster and some probesets are contained in multiple transcript
-clusters.
+CLF 文件包含有关阵列上各个探针位置的信息。
+然后，PGF 文件包含各个探测序列，
+并显示它们所属的探针组。最后，probeset 注释 .csv 
+然后包含有关在哪个 transcript 集群中
+使用哪些 probeset 的信息。
+通常，在一个转录物簇中使用多个探针组，
+并且一些探针组包含在多个转录物簇中。
 
 
-# Linear models
+# 线性模型
 
-In order to analyse which genes are differentially expressed between 
-inflamed and non-inflamed tissue, we have to fit a linear model to our 
-expression  data. Linear models are the "workhorse" for the analysis of 
-experimental data. They can be used to analyse almost arbitrarily 
-complex designs, however they also take a while to learn and understand
-and a thorough description is beyond the scope of this workflow.
+为了分析哪些基因在发炎组织和非发炎组织之间差异表达， 
+我们必须将线性模型拟合到我们的表达数据中。
+线性模型是分析实验数据的“主力”。 
+它们可用于分析几乎任意复杂的设计，
+但是它们也需要一段时间来学习和理解，
+并且详尽的描述超出了本工作流程的范围。
 
-Mike Love's and Rafael Irizzary's ["Biomedical Data Science"](http://genomicsclass.github.io/book/) [@Irizarry_2015] is a very good resource, especially the section on [interactions and contrasts](http://genomicsclass.github.io/book/pages/interactions_and_contrasts.html).
-It might also be helpful to learn some linear algebra to better understand
-the concepts here. The Khan Academy offers helpful (and free) [online courses](https://www.khanacademy.org/math/linear-algebra).
+Mike Love's 和 Rafael Irizzary's ["Biomedical Data Science"](http://genomicsclass.github.io/book/) [@Irizarry_2015] 是一个非常好的资源，尤其是关于[interactions and contrasts](http://genomicsclass.github.io/book/pages/interactions_and_contrasts.html).的部分。
+学习一些线性代数以更好地理解这里的概念也可能有所帮助。
+The Khan Academy 提供有用（和免费）的在线课程。 [online courses](https://www.khanacademy.org/math/linear-algebra).
 
-## Linear models for microarrays
+## 微阵列的线性模型
 
-We now apply linear models to microarrays. Specifically, we discuss
-how to use the `r Biocpkg("limma") ` package for differential expression 
-analysis. The package is designed to analyze complex experiments involving 
-comparisons between many experimental groups simultaneously while remaining 
-reasonably easy to use for simple experiments. The main idea is to fit 
-a linear model to the expression data for each gene. Empirical Bayes and other 
-methods are used to borrow information across genes for the residual variance 
-estimation leading to "moderated" \(t\)-statistics, and stabilizing 
-the analysis for experiments with just a small number of arrays [@Smyth_2004]. 
-Conceptually, the final per gene variance is a mix of a prior variance and 
-the per gene variance.
+我们现在将线性模型应用于微阵列。 具体来说，我们讨论如何使用
+`r Biocpkg("limma") ` 包进行差异表达式分析。
+该包用于分析复杂实验， 
+包括同时在许多实验组之间进行比较， 
+同时保持相当容易用于简单实验。 
+主要思想是将线性模型拟合到每个基因的表达数据。
+经验贝叶斯和其他方法被用于借助基因信息来进行剩余方差估计， 
+从而导致“适度” \(t\)-statistics, 并稳定
+仅使用少量阵列的实验分析 [@Smyth_2004]. 
+从概念上讲，
+每个基因的最终方差是先验方差和每个基因方差的混合。
 
-Typical experimental designs are disussed in chapter 9 of `r Biocpkg("limma") `
-"User Guide", which can be found on the Bioconductor landing page 
-of `r Biocpkg("limma") `. 
+典型的实验设计在 `r Biocpkg("limma") `
+"用户指南"的第9章中讨论，可以在`r Biocpkg("limma") `
+登陆页面上找到。
 
-In the following, we use appropriate design and contrast matrices for
-our linear models and fit a linear model to each gene separately.
+在下文中，我们为线性模型使用适当的设计和对比矩阵，
+并分别为每个基因拟合线性模型。
 
-## A linear model for the data
+## 数据的线性模型
 
-For the subsequent linear modelling of the data, we introduce the abbreviations 
-"UC" and "CD" for the disease types, and "non_infl." and "infl."
-for the phenotypes, respectively: 
+对于随后的数据线性建模， 
+我们分别为疾病类型引入缩写“UC”和“CD”，
+并为表型引入 “non_infl” 和 “infl”：
 
 ```{r introductionOfAbbreviations}
 individual <- 
@@ -1198,38 +1198,38 @@ disease <-
                     "Crohn"), "CD", "UC")
 ```
 
-The original paper is interested in changes in transcription that occur
-between inflamed and adjacent non-inflamed mucosal areas of the colon.
-This is studied in both inflammatory bowel disease types.
+原始论文对发炎和邻近的非发炎的结肠粘膜区域之间
+发生的转录变化感兴趣。
+这在两种炎症性肠病中都有研究。
 
-For building our linear model, we have to think about 
-which experimental variables we want to consider.
-As we want to find differential expression 
-between non-inflamed and inflamed tissue, in principle, 
-those are the only two variables 
-we would have to consider.
+为了构建我们的线性模型，
+我们必须考虑我们想要考虑哪些实验变量。 
+由于我们希望找到非发炎和发炎组织之间的
+差异表达，
+原则上，
+这些是我们必须考虑的唯一两个变量。
 
-However, since we have two arrays per individual patient, we have a
-"Paired Samples" design (see section 9.4 of the `r Biocpkg("limma")` 
-user guide). This means that the samples might be biased by the person they come 
-from. Whenever a feature in an experimental setup 
-is expected to have a systematic influence on the result, blocking factors 
-on these features should be introduced.
+但是，由于每个患者有两个阵列，
+我们有一个“配对样本”设计 (参见 第 9.4 节 of the `r Biocpkg("limma")` 
+用户指南). 这意味着样本可能会受到来自的人的偏见。 
+每当预期实验装置中的特征对结果
+具有系统性影响时， 
+应引入这些特征的阻塞因子。
 
-Thus, the first factor we need is a blocking factor for the individuals 
-that will absorb differences in expression between
-them. Therefore, we block on patients, which means that the 
-patient IDs become variables of the linear model.
+因此，我们需要的第一个因素是个体的阻滞因子，
+它将吸收它们之间表达的差异。
+因此，我们阻止患者，
+这意味着患者 ID 成为线性模型的变量。
 
-Then we create factors that give us the grouping for
-the tissue types (non-inflamed and inflamed).
+然后我们创建了一些因子，
+这些因子可以为我们提供组织类型的分组（非发炎和发炎）。
 
-Finally, we create two design matrices, 
-one for each of the two diseases as we will analyze them separately 
-in order to follow the analysis strategy of the original paper 
-closely (one could also fit a joint model to 
-the complete data set; however, the two diseases might show very different
-characteristics so that a joint fit might not be appropriate).
+最后，我们创建两个设计矩阵，
+分别针对两种疾病中的每一种， 
+因为我们将分别对它们进行分析，
+以便密切关注原始论文的分析策略
+也可以将一个联合模型拟合到完整的数据集;
+但是，两种疾病可能表现出非常不同的特征，因此联合适合可能不合适）。
 
 ```{r createDesign, eval=TRUE, dependson="excludeMultipleMappings" }
 i_CD <- individual[disease == "CD"]
@@ -1243,7 +1243,7 @@ colnames(design_palmieri_UC)[1:2] <- c("I", "nI")
 rownames(design_palmieri_UC) <- i_UC 
 ```
 
-We can inspect the design matrices:
+我们可以检查设计矩阵：
 
 ```{r inspectDesignMatrix, eval = TRUE, dependson="createDesign"}
 head(design_palmieri_CD[, 1:6])
@@ -1251,55 +1251,55 @@ head(design_palmieri_CD[, 1:6])
 head(design_palmieri_UC[, 1:6])
 ```
 
-In the design matrix, the rows represent the patient array, 
-and the columns are the variables we include in our linear model. The variables 
-correspond to our blocking factors: there are two for non-inflamed and inflamed 
-tissue, respectively, and one for each patient. "`i_UC2424`" for example is the 
-blocking variable of patient 2424; UC stands for the disease the patient is 
-suffering from. 
-For example, the first two rows of the design matrix `design_palmieri_CD` 
-correspond to the two arrays for individual "164". 
+在设计矩阵中，行表示患者阵列，
+列是我们在线性模型中包含的变量。
+变量对应于我们的阻塞因素: 对于非发炎和发炎的组织分别有两个，
+每个患者一个。例如， "`i_UC2424`" 是患者 2424 的阻断变量;
+ "`i_UC2424`" 是患者 2424 的阻断变量;
+UC 代表患者患的疾病。
+例如，设计矩阵 `design_palmieri_CD` 的前两行对应于单个
+的两个数组。
 
-The design matrix entries are 0 or 1 and thus tell us 
-which variables are "active" for which sample: 
+设计矩阵条目为 0 或 1
+因此告诉我们哪个变量对于哪个样本是“活动的”：
 
-It can be seen as a switch that turns the single variables "on" (with a 1 at the 
-corresponding position) or "off" (with a 0 at the corresponding position) for 
-each row, i. e. each patient array. If we take a closer look at the single rows,
-we see that for each sample, there are two "ones" assigned: one to one of the 
-variables "nI" or "I" corresponding to the tissue the array came from, 
-and one to the corresponding patient-specific blocking variable.
+它可以看作是一个开关， 
+用于将每个行中的单个变量“打开”（在相应位置处为 1）或“关闭”（在相应位置处为 0 ），
+即每个患者阵列。如果我们仔细查看单行，
+我们会看到每个样本都分配了两个 “1”： 
+一个到一个变量 “nI” 或 “I” 对应于阵列来自的组织，
+一个对应于相应的患者特异性阻断变量。
 
-Note that in the linear model, individual 164 serves as the baseline for all 
-other individuals and thus isn't included in the sample variables.
+注意，在线性模型中，个体 164 用作所有其他个体的基线，
+因此不包括在样本变量中。
 
-Note that instead of blocking on individuals, it would also be possible to use a 
-"mixed model" approach with the `duplicateCorrelation()`function from the 
-`r Biocpkg("limma")` package. 
-It has advantages over the "fixed patient effect model" presented here 
-in terms of applicability to more complicated experimental designs, 
-where we want to perform comparisons both within and between the patients (e.g. 
-comparing between the two diseases; "split-plot-designs"). 
+请注意，不是阻止个人，也可以使用 `r Biocpkg("limma")` 包中的
+`duplicateCorrelation()` 函数的
+“混合模型”方法。 
+它比这里提出的“固定患者效应模型”具有优势，
+适用于更复杂的实验设计，
+我们希望在患者内部和患者之间进行比较
+（例如，比较两种疾病;“分裂情节设计”））。
 
-More information on it can be found in the [limma User's Guide](https://www.bioconductor.org/packages/release/bioc/vignettes/limma/inst/doc/usersguide.pdf) (section 17.3.6). 
-However, the above explained is more intuitive and is therefore used here.
+有关它的更多信息可以在 [limma User's Guide](https://www.bioconductor.org/packages/release/bioc/vignettes/limma/inst/doc/usersguide.pdf) (section 17.3.6). 
+ 然而，以上说明更直观，因此在此使用。
 
-Before heading on to find all differentially expressed genes for both diseases, 
-we will first have a look at how this works in principle for one gene.
-We will fit the linear model for one gene and run a t-test in order 
-to see whether the gene is differentially expressed or not.
+在继续找到这两种疾病的所有差异表达基因之前， 
+我们首先要看看这对于一种基因原理是如何起作用的。
+我们将拟合一个基因的线性模型并进行t-test，
+以查看该基因是否差异表达。
 
-## Analysis of differential expression based on a single gene
+## 基于单个基因的差异表达分析
 
-For linear model fitting and subsequent testing for differential expression 
-by t-test, we will pick the gene with the PROBEID 8164535. It has the gene 
-symbol  *CRAT* and will be named as such in the following code. 
+对于线性模型拟合和随后通过 t-test 进行差异表达的测试，
+我们将使用 PROBEID 8164535 挑选基因。
+它具有基因符号 *CRAT*  并将在以下代码中命名。
 
-**Illustration of the fitted linear model on the *CRAT* gene**
+***CRAT* 基因拟合线性模型的插图**
 
-Before fitting the linear model, we have a look at the expression intensities
-of this gene for each patient in non-inflamed and inflamed tissue, 
-respectively: 
+在拟合线性模型之前，
+我们分别研究了该基因在非发炎和发炎组织中
+的表达强度：
 
 
 ```{r visualizeExpressionChanges, fig.cap="Visualization of expression changes"}
