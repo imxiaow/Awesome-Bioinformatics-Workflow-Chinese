@@ -1317,22 +1317,22 @@ ggplot(data = crat_data, aes(x = tissue_CD, y = org_value,
       ggtitle("Expression changes for the CRAT gene")
 ```
 
-We see that overall, this gene is expressed less in inflamed tissue 
-(Figure \@ref(fig:visualizeExpressionChanges)). We also see that the absolute 
-expression intensities vary greatly between patients. 
-However, we have already taken care of this 
-problem by introducing blocking factors based on the individuals, which allows 
-us to compare the tissues within each individual as represented by
-the single lines.
+总体而言，我们看到这种基因在炎症组织中的表达较少
+(Figure \@ref(fig:visualizeExpressionChanges))。我们还发现
+患者之间的绝对表达强度差别很大。 
+然而，我们已经
+通过引入基于个体的阻断因子来解决这个问题，
+这允许我们比较每个个体内的组织，
+如单线所示。
 
-If we had not blocked for individuals, the linear model would 
-treat them interchangably and a graphical depiction would only
-include a single line. Since the individuals haver very different
-baseline expression levels, this would lead to a very high variance of
-the estimated fold changes.
+如果我们没有阻止个体，
+线性模型将可互换地对待它们，
+并且图形描述将仅包括单行。 
+由于个体具有非常不同的基线表达水平，
+这将导致估计的倍数变化的非常高的方差。
 
-We now compute the variable coefficients by fitting a linear model. 
-We get a vector `crat_coef` with one entry for each variable.
+我们现在通过拟合线性模型来计算变量系数。
+我们得到一个向量 `crat_coef` ，每个变量有一个条目。
 
 ```{r obtainFitCRAT}
 crat_coef <- lmFit(palmieri_final[,disease == "CD"],
@@ -1342,8 +1342,8 @@ crat_coef
 ```
 
 
-In order to now obtain the expression values fitted by the model, 
-we multiply the design matrix with this vector of coefficients `crat_coef`:
+为了现在获得模型拟合的表达式值，
+我们将设计矩阵乘以系数 `crat_coef`的向量：
 
 ```{r 2obtainFitCRAT}
 crat_fitted <- design_palmieri_CD %*% crat_coef
@@ -1353,21 +1353,21 @@ colnames(crat_fitted) <- "fitted_value"
 crat_fitted
 ```
 
-Recall that for every row in the design matrix (i.e. every patient sample) 
-only the variables with a 1 in the design matrix are taken into account for 
-calculating the fitted expression value. 
+回想一下，对于设计矩阵中的每一行（即每个患者样本），
+仅考虑设计矩阵中具有1的变量
+来计算拟合表达值。
 
-This means that as output of the multiplication, we get 
-a vector `crat_fitted` whose entries are the sum of relevant 
-variable coefficients for each sample, respectively.
+这意味着作为乘法的输出， 
+我们得到一个矢量 `crat_fitted`，
+其条目分别是每个样本的相关变量系数的总和。
 
-For example, the fitted value for patient sample `2114_I.CEL` 
-is `r crat_coef["nI"] + crat_coef["i_CD2114"]`: it is the sum of the respective activated variable coefficients "nI" (`r crat_coef["nI"]`) 
-and "i_CD2114" (`r crat_coef["i_CD2114"]`).
+例如，患者样本 `2114_I.CEL` 的拟合值是
+`r crat_coef["nI"] + crat_coef["i_CD2114"]`: 它是各个激活变量系数 "nI" (`r crat_coef["nI"]`) 
+和 "i_CD2114" (`r crat_coef["i_CD2114"]`) 的总和。
 
 
-Let's visualize the difference between non-inflamed and inflamed tissue 
-again after fitting: 
+让我们在拟合后
+再次可视化非发炎和发炎组织之间的差异：
 
 ```{r 3obtainFitCRAT, fig.cap="Expression changes for the CRAT gene"}
 crat_data$fitted_value <- crat_fitted
@@ -1379,51 +1379,51 @@ ggplot(data = crat_data, aes(x = tissue_CD, y = fitted_value,
 ```
 
 
-Note that the difference of the fitted expression values between inflamed and 
-non-inflamed samples of one patient is the same for all patients and 
-is determined by the difference between the variable coefficients of 
-`I` (`r crat_coef["I"]`) and `nI` (`r crat_coef["nI"]`), 
-which is  `r crat_coef["I"] - crat_coef["nI"]` 
+注意，一名患者的发炎和非发炎样本之间拟合表达值的差异对于所有患者是相同的，
+并且由
+`I` (`r crat_coef["I"]`) 和 `nI` (`r crat_coef["nI"]`)
+的变量系数之间的差异确定
+即  `r crat_coef["I"] - crat_coef["nI"]` 
 (Figure \@ref(fig:3obtainFitCRAT)). 
 
-This is the case because the same blocking variable is activated by the design 
-matrix for both samples from a single patient, leading to a comparison within
-patients only. These blocking variables correct the fitted tissue specific 
-expression values towards the expression levels of the individual patients.
-Therefore the final estimate is like an average of all the within-individual
-differences.
+情况就是这样，
+因为来自单个患者的两个样本的设计矩阵激活相同的阻塞变量，
+导致仅在患者内进行比较。
+这些阻断变量使拟合的组织特异性表达值朝向个体患者的表达水平进行校正。
+因此，
+最终估计值就像所有个体内部差异的平均值。
 
-The "difference" between non-inflamed and inflamed tissue of 
-`r crat_coef["I"] -  crat_coef["nI"]` is actually a log2 fold change, as our 
-expression data is on the log2 scale. `r crat_coef["I"] - crat_coef["nI"]`
-therefore is our log2 fold change for the CRAT gene.
+非发炎组织和发炎组织之间的 “差异”
+`r crat_coef["I"] -  crat_coef["nI"]` 实际上是 log2 倍变化， 
+因为我们的表达数据是 log2 标度。因此，`r crat_coef["I"] - crat_coef["nI"]`
+是 CRAT 基因的 log2 倍变化。
 
-**Differential expression analysis of the CRAT gene**
+**CRAT 基因的差异表达分析**
 
-In order to test whether the gene is differentially expressed or not, 
-a \(t\)-test with the null hypothesis that there is no difference 
-in the expression between non-inflamed and inflamed tissue is carried out. 
-Our blocking design is conceptually similar to a paired t-test for 
-which the statistic is given by:
+为了测试基因是否差异表达， 
+进行具有零假设的 \(t\)-test， 
+即非发炎组织和发炎组织之间的表达没有差异。
+我们的阻塞设计在概念上类似于配对t检验，
+其统计数据由下式给出：
 
 
 \[
  t = \frac{\bar{d} }{s/\sqrt{n}}
 \]
 
-Where, \(\bar{d}\) is the mean difference in expression values
-between the individuals. 
-The paired t-test computes the variance \(s^2\) from the paired differences.
-This is lower than the variance of a standard t-test and thus the paired 
-t-test has higher power as long as the expression values 
-for the same individual are correlated ([see e.g. the article on Wikipedia](https://en.wikipedia.org/wiki/Paired_difference_test)).
+其中, \(\bar{d}\) 是个体之间表达值
+的平均差异。
+paired t-test 从配对差异计算方差  \(s^2\)。
+这低于标准 t-test 的方差，
+因此只要同一个体的表达值相关， 
+配对t检验就具有更高的功效（参见例如维基百科上的文章）。 ([see e.g. the article on Wikipedia](https://en.wikipedia.org/wiki/Paired_difference_test)).
 
-We thus have improved the power of the ordinary \(t\)-test 
-by reducing the variance via blocking on individuals.
+因此，我们通过阻止个体来减少方差， 
+从而提高了普通 \(t\)-test 的能力。
 
-We now conduct the \(t\)-test on the linear model in order to find 
-out whether the difference between non-inflamed and inflamed 
-tissue differs significantly from 0: 
+我们现在对线性模型进行 \(t\)-test，
+以确定非发炎组织和发炎组织之间的差异 
+是否与 0 显着不同: 
 
 ```{r tTest}
 crat_noninflamed <- na.exclude(crat_data$org_value[tissue == "nI"])
@@ -1432,28 +1432,28 @@ res_t <- t.test(crat_noninflamed ,crat_inflamed , paired = TRUE)
 res_t
 ```
 
-We get a low p-value close to `r round(res_t[["p.value"]], 4) `
-and thus can conclude that the *CRAT* gene is differentially 
-expressed between non-inflamed and inflamed tissue.
+我们得到接近 `r round(res_t[["p.value"]], 4) ` 的低 p-value 值，
+因此可以得出结论 *CRAT* 基因
+在非发炎和发炎组织之间差异表达。
 
-Note that the p-value isn't exactly the same one as below when analyzing the 
-differential expression of all genes. This is due to the variance moderation 
-performed by `r Biocpkg("limma")` .
+注意，在分析所有基因的差异表达时 p-value p值与下面的p值不完全相同。
+这是由于由 `r Biocpkg("limma")`
+执行的方差调节。
 
-## Contrasts and hypotheses tests
+## 对比和假设测试
 
-We now fit the linear model for all genes and
-define appropriate contrasts to test hypotheses of interest.
+我们现在适合所有基因的线性模型，
+并定义适当的对比来检验感兴趣的假设。
 
-We want to compare the inflamed to the non-inflamed tissue.
-Thus, we create a contrast matrix consisting of only one contrast "I-nI": 
-`r Biocpkg("limma")`'s function
-`makeContrasts` creates this matrix from 
-a symbolic description of the contrast of
-interest.
+我们想比较发炎的和非发炎的组织。
+因此，我们创建一个仅由一个对比度 "I-nI" 组成的对比矩阵: 
+`r Biocpkg("limma")` 的函数
+`makeContrasts` 根据感兴趣的
+对比度的符号
+描述创建该矩阵。
 
-We now fit a linear model to our data and apply the `contrasts.fit()` function 
-to it in order to find genes with significant differential expression between non-inflamed and inflamed tissue:
+我们现在将线性模型拟合到我们的数据中并对其应用对比度 `contrasts.fit()` 函数，
+以便找到在非发炎组织和发炎组织之间具有显着差异表达的基因：
 
 
 
@@ -1471,44 +1471,44 @@ palmieri_fit_UC <- eBayes(contrasts.fit(lmFit(palmieri_final[,disease == "UC"],
                                 contrast_matrix_UC))
 ```
 
-We applied the empirical Bayes variance moderation method to the model 
-via the `eBayes()` function, which
-computes moderated \(t\)-statistics. In microarray analysis, 
-the number of arrays often is quite small, 
-and thus variance estimation is difficult.
-Using a combination of the per-gene-variance 
-and a prior variance we can improve the 
-variance estimate, hence the term "moderation". "Empirical Bayes" 
-means that the prior is estimated from the data.
+我们通过 `eBayes()` 函数将
+经验贝叶斯方差调节方法应用于模型，
+该函数计算调节的t统计量。
+在微阵列分析中，阵列的数量通常非常小，
+因此难以估计方差。
+使用每基因方差和先验方差的组合，
+我们可以改进方差估计，
+因此术语“适度”，
+“经验贝叶斯”意味着先验是根据数据估计的。
 
-The result of the `eBayes()` step is that the individual variances are
-shrunken towards the prior value. 
+`eBayes()` 步骤的结果是
+个体差异朝着先前值收缩。
 
-## Extracting results
+## 提取结果
 
-Finally, we extract the number of differentially expressed genes. 
-Results can be extracted by use of the `topTable` function. 
-We extract the results for both Crohn's disease and ulcerative colitis, and the 
-results are sorted by their absolute \(t\)-statistics.
-As a diagnostic check, we also plot the p-value histogram: We expect a uniform 
-distribution for the p-values that correspond to true null hypotheses, while 
-a peak near zero shows an enrichment for low p-values corresponding to differentially 
-expressed (DE) genes.
+最后，我们提取差异表达基因的数量。
+可以使用 `topTable`  函数提取结果。
+我们提取克罗恩病和溃疡性结肠炎的结果， 
+结果按其绝对t统计量排序。
+作为诊断检查， 我们还绘制了 p 值直方图：
+我们期望对应于真零假设的 p 值的均匀分布，
+而接近零的峰显示对应于差异表达的低 p 值
+的富集（DE）基因。
  
-Note that if the p-value distribution for a dataset is very different 
-from the ones in the histograms below, this might lead to quality loss in the 
-subsequent analysis. Reasons for a divergent p-value-distribution might be
-batch effects or a lack of consideration of other blocking factors in the design 
-matrix. Thus, if the p-value is not as expected, 
-try to include possible blocking factors and batches and rerun the analysis. 
-If this does not help, empirical Bayes / null estimation methods 
-for multiple testing are useful. 
+请注意，如果数据集的 p 值分布与下面的直方图中的 p 值分布非常不同，
+则可能会导致后续分析中的质量损失。
+p 值分布不同的原因可能是
+批量效应或设计矩阵中缺乏对其他阻塞因素的考虑。 
+因此，如果 p 值不符合预期，请尝试包括可能的阻塞因子和批次，
+然后重新运行分析。
+如果这没有帮助，
+用于多次测试的经验贝叶斯/零估计方法是有用的。
 
-A good starting point to learn about these methods is the article on 
-false discovery rate estimation by Korbininan Strimmer [@Strimmer_2008] 
-and chapter 1--6 of Efron's book on Large-Scale Inference [@Efron_2010], 
-as well as the blog-post on "How to interpret a p-value histogram" by David 
-Robinson [@Robinson_2014].
+了解这些方法的一个很好的起点是关于
+Korbininan Strimmer [@Strimmer_2008] 的错误发现率估计和
+Efron's  的大规模推理书 [@Efron_2010], 
+以及关于“如何”解释 p值直方图的博客文章 by David 
+Robinson [@Robinson_2014]。
 
 ```{r extractResultsCD, eval = TRUE, dependson="createContrastMatrixAndFitModel", message=FALSE, fig.cap="Histogram of the p–values for Crohn’s disease."}
 table_CD <- topTable(palmieri_fit_CD, number = Inf)
@@ -1529,11 +1529,11 @@ hist(table_UC$P.Value, col = brewer.pal(3, name = "Set2")[2],
 
 ```
 
-## Multiple testing FDR, and comparison with results from the original paper
+## 多次测试 FDR，并与原始论文的结果进行比较
 
-In the original paper, a p-value of 0.001 was used as a significance
-cutoff. Using this we get `r nrow(subset(table_UC, P.Value < 0.001))`
-genes identified as differentially expressed for UC:
+在原始论文中，p 值为 0.001 用作显着性截止值。
+使用这个，我们得到 `r nrow(subset(table_UC, P.Value < 0.001))` 
+个被鉴定为 UC 差异表达的基因：
 
 
 ```{r pCutForCD}
