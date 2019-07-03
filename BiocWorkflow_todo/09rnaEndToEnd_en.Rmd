@@ -1726,9 +1726,9 @@ back_genes_idx <- sapply(back_genes_idx, function(x)x$indices)
 我们使用 `setdiff` 函数。 它返回第一个参数
 (`back_genes`) 中不属于第二个参数
 (`DE_genes_CD`) 的所有元素。
-With the `intersect` function, we verify that we were successful: 
-it should return 0, as there shouldn't be any intersect anymore between
-`back_genes`and `DE_genes_CD`:
+使用 `intersect` 函数，我们验证我们是否成功：
+它应该返回 0，因为 
+`back_genes`和 `DE_genes_CD` 之间不应该有任何交叉：
 
 ```{r GOAnalysisCreateBackgrounds3, eval=TRUE, warning=FALSE, message=FALSE}
 back_genes <- featureNames(palmieri_final)[back_genes_idx]
@@ -1739,11 +1739,11 @@ intersect(back_genes, DE_genes_CD)
 length(back_genes)
 ```
 
-We create a multidensity plot with mean expression on the x-axis 
-and curves for all genes, foreground genes and background genes, respectively 
-(Figure \@ref(fig:multidensityPlot)). We want to see whether the background 
-genes show a plot similar to the foreground genes so that the background 
-is not biased for the gene enrichment analysis:
+我们创建了一个多密度图，
+其中 x 轴分别为平均表达，所有基因，前景基因和背景基因分别为曲线
+(Figure \@ref(fig:multidensityPlot))。
+我们想看看背景基因是否显示出与前景基因类似的图，
+这样背景基因浓缩分析就没有偏差：
 
 ```{r multidensityPlot, fig.cap="Selecting a background set of genes for the gene ontology analysis."}
 multidensity(list(
@@ -1755,35 +1755,35 @@ multidensity(list(
    main = "DE genes for CD-background-matching")
 ```
 
-When comparing the "background gene" curve to the "foreground gene" curve, 
-we see a  similar curve shape, indicating a sensible background matching 
-(Figure \@ref(fig:multidensityPlot)). Note that the right-shift of the 
-"foreground-gene" curve in comparison to the "background-gene" curve 
-indicates that DE-genes are generally very
-highly expressed, so that it wasn't possible to find background-genes 
-with exactly equal overall expression distribution.
+当将“背景基因”曲线与“前景基因”曲线进行比较时，
+我们看到类似的曲线形状，表明合理的背景匹配
+(Figure \@ref(fig:multidensityPlot))。
+请注意，与“背景基因”曲线相比，“前景 - 基因”曲线的右移
+表明DE基因通常表达非常高，
+因此无法找到完全相同的背景基因。
+整体表达分布。
 
-The "all gene" curve has the leftmost curve maximum; 
-this can be explained by a high number of lowly expressed genes 
-in all samples and shows that a background matching is sensible 
-in order to avoid biases.
+“全基因” 曲线最左边的曲线最大；
+这可以通过所有样品中的
+大量低表达基因来解释，
+并且表明背景匹配是合理的以避免偏差。
 
-For the actual testing of which GO gene sets are enriched in inflamed tissue, 
-we use the `r Biocpkg("topGO")` package which implements a nice interface 
-to Fisher testing and also has additional algorithms
-taking the GO structure into account, by e.g. only reporting the most specific
-gene set in the hierarchy [@Alexa_2006].
+对于 GO 基因组在炎症组织中富集的实际测试， 
+我们使用 `r Biocpkg("topGO")` 包，其实现了与
+Fisher 测试的良好界面，
+并且还具有考虑 GO 结构的其他算法，
+例如，仅报告层次结构中最具体的基因集 [@Alexa_2006].
 
-The GO has three top ontologies: Cellular component (CC), biological processes
-(BP), and molecular function (MF). For illustrative purposes we limit ourselves 
-to the BP category here. 
+GO 有三个顶级本体：细胞成分（CC），生物过程（BP）和分子功能（MF）。
+出于说明目的，
+我们将此限制在 BP 类别中。
 
-## Running topGO
+## 运行 topGO
 
-topGO requires a topGOdata object containing the necessary information for the 
-analysis. We follow the steps described in the topGO vignettes: First, 
-we will create a named vector `all_genes` with all genes to be analyzed, i.e. 
-DE-genes and background genes: 
+topGO 需要一个 topGOdata 对象，其中包含分析所需的信息。
+我们按照 topGO 小插图中描述的步骤进行操作：
+首先，我们将创建一个命名向量 `all_genes` 其中包含所有要分析的基因，
+即 DE 基因和背景基因：
 
 ```{r createFactorOfInterestingGenes, dependson="GOAnalysisCreateBackgrounds", eval=TRUE}
 gene_IDs <- rownames(table_CD)
@@ -1795,56 +1795,56 @@ all_genes <- factor(as.integer(in_selection[in_universe]))
 names(all_genes) <- gene_IDs[in_universe] 
 ```
 
-The following steps were carried through: 
+执行以下步骤：
 
-  1. we created an `in_universe` vector by using the `%in%` matching function. 
-  We want to know which elements from `gene_IDs` are also contained in 
-  `DE_genes_CD` and `back_genes`, as the latter two are our gene universe 
-  we use for enrichment analysis.
-  We got a vector `in_universe` with the length of `gene_IDs` that has the 
-  entry `TRUE` when the corresponding gene in `gene_IDs` could be also found in 
-  `DE_genes_CD` or `back_genes`, and `FALSE` otherwise.
+  1. 我们使用`%in%` matching 函数创建了一个 `in_universe`向量。
+  我们想知道来自 `gene_IDs` 的哪些元素也包含在
+  `DE_genes_CD` 和 `back_genes` 中， 
+  因为后两者是我们用于浓缩分析的基因世界。
+  我们得到一个带有 `gene_IDs` 长度的的载体 `in_universe`，
+  当 `gene_IDs` 中的相应基因也可以在 `DE_genes_CD` 或 `back_genes` 中中找到时，
+  其条目为 `TRUE`，否则为 `FALSE`。
   
-  2. We did the same for our DE-genes and call this vector `in_selection`.
+  2. 我们为我们的 DE 基因做了同样的事情，并将这个载体称为 `in_selection`.
   
-  3. We created the `all_genes` vector:
-    a) First, we selected all the elements from `in_selection` 
-    that are `TRUE` in `in_universe` by applying
-    `all_genes <- in_selection[in_universe]`.
-    b) Then, we converted the elements in `all_genes` from `TRUE` and `FALSE` 
-    to 0 and 1 by converting the vector to an integer vector. 
-    This way, each element in the vector is a 0 if the corresponding gene is a
-    background gene and a 1 if the corresponding gene is a DE-gene. Also, we 
-    converted the vector to a factor.
-    c) We named the vector elements with the corresponding `gene_IDs`.
+  3. 我们创建了 `all_genes` 向量：
+    a）首先，我们通过应用 `all_genes <- in_selection[in_universe]`
+     选择 `in_selection` 中 
+     `in_universe` 中 `TRUE`的所有元素。
+    b) 然后，我们通过将向量转换为整数向量，将 `all_genes` 中的元素从 `TRUE` 和 `FALSE` 
+    转换为 0 和 1。
+    这样，如果相应的基因是背景基因，
+    载体中的每个元件是 0，如果相应的基因是 DE 基因则是 1。
+    此外，我们将矢量转换为因子。
+    c) 我们用相应的 `gene_IDs` 命名了 vetor 元素。
 
 
-We now initialize the `r Biocpkg("topGO") ` data set, using the GO annotations 
-contained in the annotation data base for the chip we are using. The `nodeSize`
-parameter specifies a minimum size of a GO category we want to use: i.e. here,
-categories with less than 10 genes are not included in the testing.
+我们现在使用我们正在使用的芯片的注释数据库中包含的 GO 注释初始化 `r Biocpkg("topGO") ` 数据集。
+`nodeSize` 参数指定我们想要使用的 GO 类别的最小大小；
+即，此处测试中不包括具有少于
+10 个基因的类别。
 
 ```{r createTopGODataSet, dependson="createFactorOfInterestingGenes", eval=TRUE, message = FALSE, warning=FALSE}
 top_GO_data <- new("topGOdata", ontology = "BP", allGenes = all_genes,
  nodeSize = 10, annot = annFUN.db, affyLib = "hugene10sttranscriptcluster.db")
 ```
 
-Now the tests can be run. `r Biocpkg("topGO") ` offers a wide range of options,
-for details see the paper [@Alexa_2006] or the package vignette.
+现在可以运行测试了。`r Biocpkg("topGO") ` 包提供多种选择，有关详细信息，
+请参阅 [@Alexa_2006] 或包插图。
 
-We run two common tests: an ordinary Fisher test for every GO category, and the
-"elim" algorithm, which tries to incorporate the hierarchical structure of the
-GO and tries to "decorrelate" it in order to report the most specific 
-significant term in the hierarchy.
+我们运行两个常见的测试： 每个 GO 类别的普通 Fisher 测试，以及 
+"elim" 算法，它试图结合
+的层次结构并
+尝试“去相关”它以报告最具体的重要术语。
 
-The algorithm starts processing the nodes / GO categories
-from the highest (bottommost) level and then iteratively
-moves to nodes from a lower level. If a node is scored as significant,
-all of its genes are marked as removed in all ancestor nodes.
-This way, the "elim" algorithm aims at finding the most specific node
-for every gene.
+该算法从最高（最低）级别开始处理节点/ GO 类别，
+然后从较低级别迭代地移动到节点。 
+如果节点评分为显着，
+则其所有基因在所有祖先节点中被标记为已移除。
+这样， "elim" 算法旨在为
+每个基因找到最特定的节点。
 
-The test uses a 0.01 p-value cutoff by default.
+该测试默认使用 0.01 p-value p值截止值。
 
 ```{r runtopGOTests, results='hide', eval=TRUE, dependson = "createTopGODataSet", message = FALSE}
 result_top_GO_elim <- 
@@ -1853,16 +1853,16 @@ result_top_GO_classic <-
   runTest(top_GO_data, algorithm = "classic", statistic = "Fisher")
 ```
 
-We can now inspect the results. We look at the top 100 GO categories according
-to the "Fisher elim" algorithm. The function `GenTable` produces
-a table of significant GO categories, the function `printGenes`
-gives genes annotated to them; the significant ones are denoted with a "2"
-in the "raw  p-value" column, the non-significant ones with a "1". 
-We therefore select `raw p-value == 2`. 
+我们现在可以检查结果。 我们根据 “Fisher elim” 算法查看前 100 个 GO 类别。
+`GenTable` 函数生成一个重要类别的表格，
+`printGenes` 函数给出了注释它们的基因; 
+重要的那些在 “原始p值” 列中用 “2” 表示，
+非重要的用 “1” 表示。
+因此，我们选择原始p值 `raw p-value == 2`. 
 
-Note that we do not get the actual p-values here because our `all_genes` vector 
-doesn't contain this information; it only tells us
-whether a gene is differentially  expressed or not.
+请注意，我们在这里没有得到实际的p值，
+因为我们的 `all_genes` 向量不包含这些信息; 
+它只告诉我们基因是否差异表达。
 
 ```{r processtopGOResults, eval=TRUE, dependson="runtopGOTests"}
 res_top_GO <- GenTable(top_GO_data, Fisher.elim = result_top_GO_elim,
@@ -1880,11 +1880,11 @@ res_top_GO$sig_genes <- sapply(genes_top_GO, function(x){
 head(res_top_GO[,1:8], 20)
 ```
 
-## Visualization of the GO-analysis results
+## GO 分析结果的可视化
 
-A graph of the results can also be produced. Here we visualize the three most
-significant nodes according to the Fisher elim algorithm in the context of
-the GO hierarchy.
+还可以产生结果图。
+在这里，
+我们根据 GO 层次结构中的 Fisher elim 算法可视化三个最重要的节点。
 
 
 ```{r graphOfResults, fig.height = 6, eval=TRUE, results='hide', dpi=600, fig.cap="Significantly enriched GO nodes in the GO hierarchy"}
@@ -1892,15 +1892,15 @@ showSigOfNodes(top_GO_data, score(result_top_GO_elim), firstSigNodes = 3,
                useInfo = 'def')
 ```
 
-We can see that indeed GO categories related to inflammation, signalling and 
-immune response come up as significant (Figure \@ref(fig:graphOfResults))
-Gene set enrichment analysis has been a field of very extensive
-research in bioinformatics. For additional approaches
-see the `r Biocpkg("topGO") ` vignette and the references therein 
-and also in the [GeneSetEnrichment view](http://bioconductor.org/packages/release/BiocViews.html#___GeneSetEnrichment). 
+我们可以看到确实与炎症，
+信号传导和免疫反应相关的 GO 类别显着 (Figure \@ref(fig:graphOfResults))
+基因集富集分析一直是生物信息学中广泛研究的领域。 
+有关其他方法，
+请参阅 `r Biocpkg("topGO") ` 小插图及其中的参考文献以及 
+[GeneSetEnrichment view](http://bioconductor.org/packages/release/BiocViews.html#___GeneSetEnrichment). 
 
 
-# A pathway enrichment analysis using reactome
+# 使用 reactome 的途径富集分析
 
 The package `r Biocpkg("ReactomePA") ` offers the possibility to test enrichment
 of specific pathways using the free, open-source, curated and peer reviewed 
@@ -1943,7 +1943,7 @@ head(as.data.frame(reactome_enrich))[1:6]
 
 Note that we trimmed pathway names to 20 characters.
 
-## Visualizing the reactome based analysis results 
+## 可视化基于反应组的分析结果
 
 The top pathways can be displayed as a bar chart that displays all categories
 with a p-value below the specified cutoff (Figure \@ref(fig:reactomeBar)).
@@ -1973,7 +1973,7 @@ pathways. This allows the mapping of the expression data at hand to known
 regulatory interactions.
 
 
-# Session information
+# 会话信息
 
 As the last part of this document, we call the function *sessionInfo*,
 which reports the version numbers of R and all the packages used in
@@ -1997,7 +1997,7 @@ sessionInfo()
 ```
 
 
-# Acknowledgements
+# 致谢
 
 The authors would like to thank Vladislava Milchevskaya, 
 Julian Gehring and Mike Smith for helpful comments on and small contributions 
@@ -2015,7 +2015,7 @@ for microarrays in Bioconductor.
 
 
 
-# Author Contributions
+# 作者贡献
 
 BK produced the first version of this article. 
 BK implemented the main scaffold of the workflow and designed 
@@ -2023,5 +2023,5 @@ the workflow steps. SR implemented additional workflow steps and
 improved existing ones from version 1. BK and SR wrote the article.
 
 
-# References
+# 参考
 
