@@ -7,7 +7,7 @@ author:
     affiliation: EMBL Heidelberg, Meyerhofstrasse 1, 69117 Heidelberg, Germany, steffi.reisenauer@tum.de
 header-includes:
   - \usepackage{float}
-摘要: 在这篇文章里，我们将阐述用 Bioconductor 包 an end-to-end Affymetrix microarray differential expression 的工作流程。这个工作流程可以直接应用在目前 “基因” 类型的微陈列，例如 HuGene 或 MoGene 微陈列，同时也容易调整并适用于类似的平台。在这里进行分析的数据是来自典型的临床微陈列数据集，用来对比两种疾病亚型中发炎和非发炎的结肠组织。针对每种疾病，发炎和非发炎的结肠组织的差异基因表达被进行了分析。我们将从原始数据 CEL 文件开始，展示如何将其导入为 Bioconductor 的 ExpressionSet，实施质量控制和归一化和最终的差异基因表达分析，其次是一些显著性分析。
+在本文中，我们使用Bioconductor包探索了end-to-end Affymetrix microarray差异表达流程。该工作流程直接适用于当前的“基因”类型阵列，例如， HuGene或MoGene阵列，但也很容易地应用于类似的平台。本文分析的数据是典型的临床微阵列数据集，它比较两种疾病亚型中的发炎和未发炎的结肠组织。每种疾病分析发炎和未发炎的结肠组织之间的差异基因表达。我们将从原始数据CEL文件开始，展示如何将它们导入Bioconductor ExpressionSet，进行质量控制和归一化处理，最后进行差异基因表达（DE）分析和一些富集分析。
 keywords: Microarray, Gene Expression
 bibliography: MAEndToEnd.bib
 output:
@@ -102,27 +102,26 @@ opts_chunk$set(echo = TRUE,
 </p>
 
 
-# 介绍
+# 引言
 
 在这篇文章里我们将介绍典型的（Affymetrix）微阵列分析的完整
-工作流程。从数据导入，前期处理，差异基因表达和显著性分析都会
-被讨论。
+工作流程。下面将从数据导入，前期处理，差异基因表达和显著性分析几个方面进行讨论。 
 
 使用的数据 [@Palmieri_2015] 来自于一篇研究发炎和非发炎组
-织中差异基因表达的论文。
+织基因表达差异的文章。
 测试了 14 个患有溃疡性结肠炎 (UC)的病人和 15 个患有克罗恩病
-（CD) 的病人，然后通过活检提取了每个病人发炎和未发炎的结肠粘
+（CD) 的患者，然后通过活检提取了每个病人发炎和未发炎的结肠粘
 膜组织。
 这个典型的临床数据集共由 58 个阵列构成。我们的目标是分析组织
 间的差异表达（DE）。
-我们的结果显示了与原始论文结果的大量重叠。
+我们的结果与原始论文的结果有大量重合。
 
 # 工作流程包的安装
 
-工作流程被包裹在叫做 `maEndToEnd` 的包里。
+工作流程被包含在在叫做 `maEndToEnd` 的包里。
 
 `maEndToEnd` 包目前可以从 GitHub 获得，
-目前可用的开发版本为 Bioconductor (3.8) (看这里:<http://bioconductor.org/packages/devel/workflows/html/maEndToEnd.html>).
+目前可用的开发版本为 Bioconductor (3.8) (详情见:<http://bioconductor.org/packages/devel/workflows/html/maEndToEnd.html>).
 
 ## 从 Bioconductor 安装工作流程包
 
@@ -179,7 +178,7 @@ suppressPackageStartupMessages({library("maEndToEnd")})
 它们不是执行工作流所必需的。
 
 ```{r pkgList, results="hide"}
-#通常的 Bioconductor 包
+#通用的 Bioconductor 包
     library(Biobase)
     library(oligoClasses)
      
@@ -240,7 +239,7 @@ if (!dir.exists(raw_data_dir)) {
 ```
 
 
-每个 ArrayExpress 数据集都有一个总结数据集的登陆页面， 
+每个 ArrayExpress 数据集都有一个总结数据集的登录页面， 
 我们使用`r Biocpkg("ArrayExpress") ` Bioconductor 包中的 `getAE` 函数获取原始数据文件的
 ftp 链接 ([Data from Palmieri et. al. on ArrayEpress](https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2967/)).
 
@@ -287,7 +286,7 @@ SDRF 文件包含有关实验样本的基本信息，例如他们所属的实验
 
 基因组数据可以非常复杂，
 通常由许多不同的组分组成，例如，
-有关实验样品的信息，测量的基因组特征的注释
+有关实验样本的信息，测量的基因组特征的注释
 以及实验数据本身。
 在 Bioconductor 中， 采用的方法是将这些组件存储
 在一个单结构中以便于管理数据。
@@ -302,7 +301,7 @@ SDRF 文件包含有关实验样本的基本信息，例如他们所属的实验
 ExpressionSet 中的数据包括：
 
 * **assayData**: 来自微阵列实验的表达数据，其中每行是微阵列探针，每列是样品标识符。
-其中每行是微阵列探针，每列是样品标识符。
+其中每行是微阵列探针，每列是样本标识符。
 * **metaData**
     + **phenoData**: 实验中样本的描述，每行是样本标识符，每列是描述元素; 储存的是 SDRF 文件的内容。
     + **featureData**: 有关芯片功能的元数据或者用于实验的技术，
@@ -313,7 +312,7 @@ ExpressionSet 中的数据包括：
 * **experimentData**: 一种灵活的结构来描述实验。
 
 ExpressionSet 类协调所有这些数据，因此不必
-担心细节。 但是，应该记住，`phenoData` 的 rownames （行名）必须与 assay data 的列名匹配，
+担心细节。 但是，应该记住，`phenoData` 的行名必须与 assay data 的列名匹配，
 而 assayData 的行名必须与 `featureData` 的行名匹配。
 这在图1中说明。 \@ref(fig:sumexp).
 
@@ -354,7 +353,7 @@ polygon(c(50,65, 65, 50),c(56,56,65,65),col="darkseagreen3",border=NA)
 text(57.5,60.5,"sample IDs", cex = 1)
 ```
 
-您可以使用函数 ` pData ` 和 ` fData ` 分别从 
+您可以分别使用函数 ` pData ` 和 ` fData ` 从
 ` ExpressionSet ` 中提取样本和要素注记。
 函数 ` exprs ` 将表达式数据本身作为矩阵返回。
 
@@ -363,7 +362,7 @@ text(57.5,60.5,"sample IDs", cex = 1)
 我们使用原始数据文件夹中的 `read.delim` 函数导入
 SDRF 文件，以获取样本注释。
 
-样本名称在 SDRF 数据表的 Array.Data.File 列中给出，并将用作 SDRF 文件的 rownames 。
+样本名称在 SDRF 数据表的 Array.Data.File 列中给出，并将用作 SDRF 文件的行名。
 
 我们将 SDRF 表转换为 `r Biocpkg("Biobase")` 包中
 的 `AnnotatedDataFrame` ，稍后我们将需要为我们的数据
@@ -379,7 +378,7 @@ SDRF <- AnnotatedDataFrame(SDRF)
 
 
 我们现在创建 Expression Set object 
-`raw_data`,它包含陈列数据，pheno data (表型数据)
+`raw_data`,它包含 array data (陈列数据)，pheno data (表型数据)
 （来自 SDRF 文件） 以及所使用
 的芯片注释包的信息。
 
@@ -429,7 +428,7 @@ head(Biobase::pData(raw_data))
 
 我们感兴趣的列如下：
 
-  * 个人的标识符，即列名 "Source.Name", "Characteristics.individual."
+  * 个体的标识符，即列名 "Source.Name", "Characteristics.individual."
   * 个体的疾病，即名为 "Factor.Value.disease."
   * 粘膜类型，即名为 "Factor.Value.phenotype."
 
@@ -446,7 +445,7 @@ Biobase::pData(raw_data) <- Biobase::pData(raw_data)[, c("Source.Name",
 
 初始数据导入后的第一步是数据的质量控制。 
 在这里，我们检查异常值并尝试查看数据是否按预期聚类，
-例如 由实验条件。 表达强度值在 
+例如 按照实验条件聚类。 表达强度值在 
 assayData 子对象 "exprs" 中，并且可以由 `exprs(raw_data)` 
 函数访问。 每行代表微阵列探针，即 
 芯片上的单个 DNA 位置，
@@ -459,7 +458,7 @@ Biobase::exprs(raw_data)[1:5, 1:5]
 
 
 对于质量控制，我们采用 `Biobase::exprs(raw_data) `的 log2，
-因为表达数据通常以 log 分析。
+因为表达数据通常以log标度分析。
 
 然后，我们执行主成分分析（PCA）并绘制它 \@ref(fig:qualityControlRawDataPCA))
 图中的每个点代表一
@@ -496,7 +495,7 @@ ggplot(dataGG, aes(PC1, PC2)) +
 这意味着
 疾病类型是基因表达差异的主要驱动因素。
 这可能会妨碍我们的分析，因为我们想要分析发炎组织和非发炎组织之间的差异表达，
-而不是人们患病的疾病的关系。
+而与人们患病的疾病类型无关。
 
 我们还通过箱形图图表示探针强度，
 每个单独的微阵列是有一个箱。(Figure \@ref(fig:qualityControlRawDataBox)). 注意， 
@@ -529,35 +528,35 @@ arrayQualityMetrics(expressionset = raw_data,
     intgroup = c("Factor.Value.disease.", "Factor.Value.phenotype."))
 ```
 
-# 背景调整，校准，摘要和注释
+# 背景调整，校准，概要和注释
 
 ## 背景调整
 
 在初始导入和质量评估之后，
 处理微阵列数据的下一步是背景调整。
 这是必要的因为测量的探针强度的一部分
-是由于非特异性杂交和光学检测系统中的噪声。
+是由于非特异性杂交和光学检测系统中的噪声造成的。
 因此，需要调整观察到的强度
 以给出特定杂交的准确测量。
 
 ## 跨阵列归一化（校准）
 
 因为许多差异的来源并不明确，
-所以要标准化跨阵列以便能够比较来自不同阵列杂交的测量结果。
-这些包括逆转录，
-标记或杂交反应的不同效率，
+所以要归一化跨阵列以便能够比较来自不同阵列杂交的测量结果。
+这些来源逆转录，
+标记或杂交反应的效率不同，
 阵列的物理问题，
 试剂批次效应
 和实验室条件。 
 
 ## 概要
 
-我们必须在归一化后进行汇总，
+归一化后，必须进行汇总，
 因为在Affymetrix平台上，
 转录本由多个探针表示，即阵列上的多个位置。
 对于每个基因，需要将所有探针的背景调整
 和标准化强度总结为一个量，
-让预计与 RNA 转录物的量成比例的量。
+它估计与 RNA 转录物的量成比例的量。
 
 在汇总步骤之后，汇总数据可以用各种信息注释，
 例如，基因符号和 ENSEMBL 基因标识符。
@@ -572,13 +571,13 @@ head(ls("package:hugene10sttranscriptcluster.db"))
 ```
 
 更多信息可从包装的参考手册中获得。
-本质上该包提供从转录本簇标识
+实际上该包提供从转录本簇标识
 符到各种注释数据的映射。
 
 ## Affymetrix 微阵列的新旧 “探针组”
 
 传统来说，Affymetrix 阵列（所谓的3'IVT 阵列）基于探针组：
-某一固定探针组是探针组的一部分，
+某一组固定的探针是探针组的一部分
 该探针组代表某种基因或转录物
 但请注意，基因可由多个探针组表示）。
 
@@ -587,8 +586,8 @@ head(ls("package:hugene10sttranscriptcluster.db"))
 名为 
 `r Biocpkg("hugene10sttranscriptcluster.db") `.
 
-通过仅从外显子阵列中获取“好”的探针，
-“基因”阵列被创建为“外显子”阵列的负担得起的版本。 
+“基因”阵列比“外显子”阵列更便宜，
+它仅从外显子阵列中获取“好”的探针。
 最初在外显子阵列上，至少有四个探针是一个“外显子”的一部分。
 通过稀释的“基因”阵列，许多探针组由三个或更少的探针组成。
 这在图4 中可视化：\@ref(fig:DifferenceBetweenExonAndGeneTypeArrays)
@@ -635,7 +634,7 @@ grid.rect(x=dat$x,y=dat$y, height=0.1, width=0.1, hjust=0,vjust=0,vp=vp2,
 
 
 在左侧，我们看到每个外显子/探针组（即每种颜色）有大量探针：
-因此，探针组/外显子水平上的摘要是合理的。
+因此，探针组/外显子水平上的总结是合理的。
 然而，在基因型阵列中，
 每个探针组仅包括一小部分原始探针。
 因此，不建议对 “基因” 阵列使用探针组/外显子级别进行汇总，
@@ -644,14 +643,14 @@ grid.rect(x=dat$x,y=dat$y, height=0.1, width=0.1, hjust=0,vjust=0,vp=vp2,
 
 注意，此外，“基因”和“外显子”型芯片上
 也不再存在指定的匹配/错配探针。 
-错配探针最初用作背景校正的基础水平，
-但由于更精细的背景校正技术
-不需要不匹配探针而没有普及。
+错配探针最初用作基础级别的背景校正，
+它没有普及，
+因为更精确的背景校正技术不需要错配探针。
 
 ## 一步预处理寡核苷酸
 
-`r Biocpkg("oligo") ` 包允许我们在一个步骤里使用用于背景校正，
-归一化，和汇总。
+在单个步骤里，我们用 `r Biocpkg("oligo") `
+包进行背景校正，归一化，和汇总。
 这个包使用反卷积方法来背景校正，分位数归一化和
 RMA (robust multichip average) 算法来汇总。
 
@@ -664,7 +663,7 @@ RMA (robust multichip average) 算法来汇总。
 在校准和评估数据之前，我们要执行另一个质量控制程序，
 即相对对数表达式（RLE），
 如 Gandolfo et al [@Gandolfo_2018]。 
-我们首先执行没有事先规范化 RMA：
+为此，我们首先执行 RMA, 这个 RMA 之前没有进行归一化处理。
 
 ```{r RMAcalibrationForRLE, eval=TRUE}
 palmieri_eset <- oligo::rma(raw_data, target = "core", normalize = FALSE)
